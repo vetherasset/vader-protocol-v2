@@ -1,0 +1,28 @@
+{
+  "name": "vader-protocol-v2",
+  "version": "1.0.0",
+  "description": "The Vader Protocol V2 implementation",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test",
+    "coverage": "truffle run coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vetherasset/vader-protocol-v2.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vetherasset/vader-protocol-v2/issues"
+  },
+  "homepage": "https://github.com/vetherasset/vader-protocol-v2#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.2",
+    "@openzeppelin/test-helpers": "^0.5.6",
+    "solidity-coverage": "^0.7.17"
+  }
+}
