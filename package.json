@@ -1,28 +1,35 @@
 {
-  "name": "vader-protocol-v2",
-  "version": "1.0.0",
-  "description": "The Vader Protocol V2 implementation",
-  "main": "truffle-config.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "truffle test",
-    "coverage": "truffle run coverage"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vetherasset/vader-protocol-v2.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/vetherasset/vader-protocol-v2/issues"
-  },
-  "homepage": "https://github.com/vetherasset/vader-protocol-v2#readme",
-  "dependencies": {
-    "@openzeppelin/contracts": "^3.4.2",
-    "@openzeppelin/test-helpers": "^0.5.6",
-    "solidity-coverage": "^0.7.17"
-  }
+    "name": "vader-monorepo",
+    "version": "1.0.0",
+    "description": "The Vader monorepo",
+    "main": "truffle-config.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "test": "truffle test",
+        "coverage": "truffle run coverage",
+        "compile": "rm -rf ./build && truffle compile"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/JCRST/vader-monorepo.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/JCRST/vader-monorepo/issues"
+    },
+    "homepage": "https://github.com/JCRST/vader-monorepo#readme",
+    "dependencies": {
+        "@openzeppelin/contracts": "^4.3.2",
+        "@openzeppelin/test-helpers": "^0.5.6",
+        "@truffle/hdwallet-provider": "^1.5.1",
+        "bn.js": "^5.2.0",
+        "dotenv": "^10.0.0",
+        "solidity-coverage": "^0.7.17"
+    },
+    "devDependencies": {
+        "truffle-plugin-verify": "^0.5.15"
+    }
 }

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.6.8;
+pragma solidity =0.8.9;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/governance/ITimelock.sol";
 
 /**
@@ -28,7 +27,6 @@ import "../interfaces/governance/ITimelock.sol";
  * and a proposal vetoed with success is also queued at the same time.
  */
 contract GovernorAlpha {
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     // The name of this contract
@@ -205,7 +203,7 @@ contract GovernorAlpha {
         address feeReceiver_,
         uint256 feeAmount_,
         address council_
-    ) public {
+    ) {
         require(
             vault_ != address(0) && USDV_ != address(0),
             "GovernorAlpha::constructor: Vader or USDV address is zero"
@@ -323,7 +321,7 @@ contract GovernorAlpha {
 
         if (proposal.executed) return ProposalState.Executed;
 
-        if (block.timestamp >= proposal.eta.add(timelock.GRACE_PERIOD()))
+        if (block.timestamp >= proposal.eta + timelock.GRACE_PERIOD())
             return ProposalState.Expired;
 
         return ProposalState.Queued;
@@ -398,8 +396,8 @@ contract GovernorAlpha {
             );
         }
 
-        uint256 startBlock = block.number.add(votingDelay());
-        uint256 endBlock = startBlock.add(votingPeriod());
+        uint256 startBlock = block.number + votingDelay();
+        uint256 endBlock = startBlock + votingPeriod();
 
         proposalId = ++proposalCount;
         Proposal storage newProposal = proposals[proposalId];
@@ -442,7 +440,7 @@ contract GovernorAlpha {
             "GovernorAlpha::queue: proposal can only be queued if it is succeeded"
         );
         Proposal storage proposal = proposals[proposalId];
-        uint256 eta = block.timestamp.add(timelock.delay());
+        uint256 eta = block.timestamp + timelock.delay();
 
         uint256 length = proposal.targets.length;
         for (uint256 i = 0; i < length; i++) {
@@ -757,9 +755,9 @@ contract GovernorAlpha {
         uint96 votes = vault.getPriorVotes(voter, proposal.startBlock);
 
         if (support) {
-            proposal.forVotes = proposal.forVotes.add(votes);
+            proposal.forVotes = proposal.forVotes + votes;
         } else {
-            proposal.againstVotes = proposal.againstVotes.add(votes);
+            proposal.againstVotes = proposal.againstVotes + votes;
         }
 
         receipt.hasVoted = true;
@@ -770,7 +768,7 @@ contract GovernorAlpha {
     }
 
     // gets the chainid from current network
-    function getChainId() internal pure returns (uint256 chainId) {
+    function getChainId() internal view returns (uint256 chainId) {
         assembly {
             chainId := chainid()
         }

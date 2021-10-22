@@ -104,5 +104,9 @@ dist
 .tern-port
 
 # Custom
+.idea/
 package-lock.json
 build/
+
+.secret
+.DS_Store

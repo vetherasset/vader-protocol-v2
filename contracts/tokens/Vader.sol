@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Unlicense
 
-pragma solidity =0.6.8;
+pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -75,7 +75,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * The latter two of the allocations are minted at a later date given that the addresses of
      * the converter and vesting contract are not known on deployment.
      */
-    constructor() public ERC20("Vader", "VADER") {
+    constructor() ERC20("Vader", "VADER") {
         _mint(address(this), _ECOSYSTEM_GROWTH);
     }
 
@@ -87,7 +87,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * will always hold a value between [0%, 1%] expressed in basis points.
      */
     function calculateFee() public view override returns (uint256 basisPoints) {
-        basisPoints = _MAX_FEE_BASIS_POINTS.mul(totalSupply()) / maxSupply;
+        basisPoints = (_MAX_FEE_BASIS_POINTS * totalSupply()) / maxSupply;
     }
 
     /**
@@ -147,14 +147,14 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         address dao
     ) external onlyOwner {
         require(
-            _converter != IConverter(0) &&
-                _vest != ILinearVesting(0) &&
-                _usdv != IUSDV(0) &&
-                dao != address(0),
+            _converter != IConverter(_ZERO_ADDRESS) &&
+                _vest != ILinearVesting(_ZERO_ADDRESS) &&
+                _usdv != IUSDV(_ZERO_ADDRESS) &&
+                dao != _ZERO_ADDRESS,
             "Vader::setComponents: Incorrect Arguments"
         );
         require(
-            converter == IConverter(0),
+            converter == IConverter(_ZERO_ADDRESS),
             "Vader::setComponents: Already Set"
         );
 
@@ -248,10 +248,10 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         address from,
         address,
         uint256 amount
-    ) internal override {
+    ) internal view override {
         if (from == address(0))
             require(
-                totalSupply().add(amount) <= maxSupply,
+                totalSupply() + amount <= maxSupply,
                 "Vader::_beforeTokenTransfer: Mint exceeds cap"
             );
 
@@ -272,7 +272,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
 
         uint256 fee = calculateFee();
 
-        uint256 tax = amount.mul(fee) / _MAX_BASIS_POINTS;
+        uint256 tax = (amount * fee) / _MAX_BASIS_POINTS;
 
         amount -= tax;
 
@@ -318,7 +318,10 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * contract has been set up and that the owner is the msg.sender
      */
     function _onlyDAO() private view {
-        require(converter != IConverter(0), "Vader::_onlyDAO: DAO not set yet");
+        require(
+            converter != IConverter(_ZERO_ADDRESS),
+            "Vader::_onlyDAO: DAO not set yet"
+        );
         require(
             owner() == _msgSender(),
             "Vader::_onlyDAO: Insufficient Privileges"

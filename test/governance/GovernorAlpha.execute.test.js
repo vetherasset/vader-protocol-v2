@@ -33,7 +33,7 @@ contract('GovernorAlpha.execute', (accounts) => {
         const {
             governorAlpha,
             timelock,
-            mockUSDV,
+            mockUsdv,
         } = await deployMock(accounts);
         await governorAlpha.setTimelock(timelock.address);
 
@@ -44,8 +44,8 @@ contract('GovernorAlpha.execute', (accounts) => {
             deploy: true,
         });
 
-        await mockUSDV.mint(accounts.account0, proposalFee);
-        await mockUSDV.approve(governorAlpha.address, proposalFee);
+        await mockUsdv.mint(accounts.account0, proposalFee);
+        await mockUsdv.approve(governorAlpha.address, proposalFee);
 
         const {
             signatures,
@@ -77,7 +77,7 @@ contract('GovernorAlpha.execute', (accounts) => {
         });
 
         this.governorAlpha = governorAlpha;
-        this.mockUSDV = mockUSDV;
+        this.mockUsdv = mockUsdv;
     });
 
     it('should not execute proposal when not in queue', async function () {

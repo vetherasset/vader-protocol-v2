@@ -79,11 +79,11 @@ contract('GovernorAlpha.propose', (accounts) => {
     it('fails when proposer has not set allowance', async () => {
         const {
             governorAlpha,
-            mockUSDV,
+            mockUsdv,
             timelock,
         } = await deployMock();
 
-        await mockUSDV.mint(
+        await mockUsdv.mint(
             accounts.account0,
             proposalFee,
         );
@@ -116,11 +116,11 @@ contract('GovernorAlpha.propose', (accounts) => {
     it('fails when proposer does not have sufficient balance', async () => {
         const {
             governorAlpha,
-            mockUSDV,
+            mockUsdv,
             timelock,
         } = await deployMock();
 
-        await mockUSDV.approve(
+        await mockUsdv.approve(
             governorAlpha.address,
             proposalFee,
             {
@@ -159,7 +159,7 @@ contract('GovernorAlpha.propose', (accounts) => {
     it('fails when proposer already has a pending proposal', async () => {
         const {
             governorAlpha,
-            mockUSDV,
+            mockUsdv,
             timelock,
         } = await deployMock();
 
@@ -169,12 +169,12 @@ contract('GovernorAlpha.propose', (accounts) => {
             timelock,
         });
 
-        await mockUSDV.mint(
+        await mockUsdv.mint(
             accounts.account0,
             proposalFee.mul(big(2)),
         );
 
-        await mockUSDV.approve(
+        await mockUsdv.approve(
             governorAlpha.address,
             proposalFee.mul(big(2)),
         );
@@ -278,7 +278,7 @@ contract('GovernorAlpha.propose', (accounts) => {
             const {
                 governorAlpha,
                 timelock,
-                mockUSDV,
+                mockUsdv,
             } = await deployMock(accounts);
 
             const {
@@ -288,25 +288,25 @@ contract('GovernorAlpha.propose', (accounts) => {
                 deploy: true,
             });
 
-            await mockUSDV.mint(
+            await mockUsdv.mint(
                 accounts.account0,
                 proposalFee,
             );
 
-            await mockUSDV.approve(
+            await mockUsdv.approve(
                 governorAlpha.address,
                 proposalFee,
             );
 
             this.governorAlpha = governorAlpha;
             this.targetsData = targetsData;
-            this.mockUSDV = mockUSDV;
+            this.mockUsdv = mockUsdv;
             this.proposer = accounts.account0;
             this.feeReceiver = accounts.account1;
 
             this.balancesBefore = {
-                [this.proposer]: (await mockUSDV.balanceOf(this.proposer)),
-                [this.feeReceiver]: (await mockUSDV.balanceOf(this.feeReceiver)),
+                [this.proposer]: (await mockUsdv.balanceOf(this.proposer)),
+                [this.feeReceiver]: (await mockUsdv.balanceOf(this.feeReceiver)),
             };
 
             this.amountsChanged = {
@@ -350,8 +350,8 @@ contract('GovernorAlpha.propose', (accounts) => {
 
         it('assert the balances transfer from propose call', async function () {
             const balancesAfter = {
-                [this.proposer]: (await this.mockUSDV.balanceOf(this.proposer)),
-                [this.feeReceiver]: (await this.mockUSDV.balanceOf(this.feeReceiver)),
+                [this.proposer]: (await this.mockUsdv.balanceOf(this.proposer)),
+                [this.feeReceiver]: (await this.mockUsdv.balanceOf(this.feeReceiver)),
             };
 
             Object.entries(this.balancesBefore).forEach(

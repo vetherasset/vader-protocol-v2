@@ -32,7 +32,7 @@ contract('GovernorAlpha state change tests', (accounts) => {
         const {
             governorAlpha,
             timelock,
-            mockUSDV,
+            mockUsdv,
         } = await deployMock(accounts);
         await governorAlpha.setTimelock(timelock.address);
 
@@ -48,7 +48,7 @@ contract('GovernorAlpha state change tests', (accounts) => {
                 (big(12).mul(big(60))),
             ); // eta is 12 minutes
         this.governorAlphaTwo = governorAlphaTwo;
-        this.mockUSDV = mockUSDV;
+        this.mockUsdv = mockUsdv;
     });
 
     describe('changeFeeReceiver', () => {
@@ -216,12 +216,12 @@ contract('GovernorAlpha state change tests', (accounts) => {
             const {
                 governorAlpha,
                 timelock,
-                mockUSDV,
+                mockUsdv,
             } = await deployMock(accounts);
             await governorAlpha.setTimelock(timelock.address);
 
-            await mockUSDV.mint(accounts.account0, parseUnits(1000, 18));
-            await mockUSDV.approve(governorAlpha.address, parseUnits(1000, 18));
+            await mockUsdv.mint(accounts.account0, parseUnits(1000, 18));
+            await mockUsdv.approve(governorAlpha.address, parseUnits(1000, 18));
 
             const calldata = governorAlpha.contract.methods['changeCouncil(address)'](accounts.account1)
                 .encodeABI();
