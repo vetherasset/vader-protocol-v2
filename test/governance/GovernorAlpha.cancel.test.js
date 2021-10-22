@@ -33,7 +33,7 @@ contract('GovernorAlpha.cancel', (accounts) => {
         const {
             governorAlpha,
             timelock,
-            mockUSDV,
+            mockUsdv,
         } = await deployMock(accounts);
         await governorAlpha.setTimelock(timelock.address);
 
@@ -44,24 +44,24 @@ contract('GovernorAlpha.cancel', (accounts) => {
             deploy: true,
         });
 
-        await mockUSDV.mint(
+        await mockUsdv.mint(
             accounts.account0,
             proposalFee.mul(big(4)),
         );
 
-        await mockUSDV.approve(
+        await mockUsdv.approve(
             governorAlpha.address,
             proposalFee.mul(big(4)),
         );
 
         this.governorAlpha = governorAlpha;
         this.targetsData = targetsData;
-        this.mockUSDV = mockUSDV;
+        this.mockUsdv = mockUsdv;
     });
 
     it('should not cancel proposal by non guardian', async function () {
-        await this.mockUSDV.mint(accounts.account1, proposalFee);
-        await this.mockUSDV.approve(
+        await this.mockUsdv.mint(accounts.account1, proposalFee);
+        await this.mockUsdv.approve(
             this.governorAlpha.address,
             proposalFee,
             {

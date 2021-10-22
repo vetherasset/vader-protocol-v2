@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Unlicense
 
-pragma solidity =0.6.8;
+pragma solidity =0.8.9;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -29,9 +28,6 @@ contract Converter is IConverter, ProtocolConstants {
     // Used for safe VADER & VETHER transfers
     using SafeERC20 for IERC20;
 
-    // Used to safely calculate VADER amount
-    using SafeMath for uint256;
-
     /* ========== STATE VARIABLES ========== */
 
     // The VETHER token
@@ -48,9 +44,9 @@ contract Converter is IConverter, ProtocolConstants {
      * Performs rudimentary checks to ensure that the variables haven't
      * been declared incorrectly.
      */
-    constructor(IERC20 _vether, IERC20 _vader) public {
+    constructor(IERC20 _vether, IERC20 _vader) {
         require(
-            _vether != IERC20(0) && _vader != IERC20(0),
+            _vether != IERC20(_ZERO_ADDRESS) && _vader != IERC20(_ZERO_ADDRESS),
             "Converter::constructor: Misconfiguration"
         );
 
@@ -85,7 +81,7 @@ contract Converter is IConverter, ProtocolConstants {
             "Converter::convert: Non-Zero Conversion Amount Required"
         );
 
-        vaderReceived = amount.mul(_VADER_VETHER_CONVERSION_RATE);
+        vaderReceived = amount * _VADER_VETHER_CONVERSION_RATE;
 
         emit Conversion(msg.sender, amount, vaderReceived);
 

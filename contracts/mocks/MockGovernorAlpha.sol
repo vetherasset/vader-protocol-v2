@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.6.8;
-pragma experimental ABIEncoderV2;
+
+pragma solidity =0.8.9;
 
 import "../governance/GovernorAlpha.sol";
 
@@ -13,7 +13,6 @@ contract MockGovernorAlpha is GovernorAlpha {
         uint256 feeAmount_,
         address council_
     )
-        public
         GovernorAlpha(
             vault_,
             guardian_,
@@ -33,7 +32,7 @@ contract MockGovernorAlpha is GovernorAlpha {
     /// does not set the CHAINID opcode and it default to 1, which results in web3.eth.getChainId and CHAINID opcode
     /// both returning different values.
     /// https://github.com/ethereum/web3.py/issues/1677
-    function CHAINID() public pure returns (uint256 chainId) {
+    function CHAINID() public view returns (uint256 chainId) {
         assembly {
             chainId := chainid()
         }

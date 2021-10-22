@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.6.8;
+
+pragma solidity =0.8.9;
 
 import "../governance/Timelock.sol";
 
 contract MockTimelock is Timelock {
-    constructor(address admin_, uint256 delay_)
-        public
-        Timelock(admin_, delay_)
-    {}
+    constructor(address admin_, uint256 delay_) Timelock(admin_, delay_) {}
 
     function GRACE_PERIOD() public pure override returns (uint256) {
         return 1 days;

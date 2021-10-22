@@ -34,7 +34,7 @@ contract('GovernorAlpha.castVote', (accounts) => {
         const {
             governorAlpha,
             timelock,
-            mockUSDV,
+            mockUsdv,
             mockVault,
         } = await deployMock(accounts);
 
@@ -45,8 +45,8 @@ contract('GovernorAlpha.castVote', (accounts) => {
             deploy: true,
         });
 
-        await mockUSDV.mint(accounts.account0, proposalFee);
-        await mockUSDV.approve(governorAlpha.address, proposalFee);
+        await mockUsdv.mint(accounts.account0, proposalFee);
+        await mockUsdv.approve(governorAlpha.address, proposalFee);
 
         const {
             signatures,

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity =0.6.8;
+pragma solidity =0.8.9;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../interfaces/governance/ITimelock.sol";
 
 /**
@@ -16,8 +15,6 @@ import "../interfaces/governance/ITimelock.sol";
  * prior admin. The new admin the calls {acceptAdmin} to accept its role.
  */
 contract Timelock is ITimelock {
-    using SafeMath for uint256;
-
     // Current admin of the contract
     address public admin;
 
@@ -84,7 +81,7 @@ contract Timelock is ITimelock {
      * - `admin_` param must not be a zero address
      * - `delay_` param must be within range or min and max delay
      */
-    constructor(address admin_, uint256 delay_) public {
+    constructor(address admin_, uint256 delay_) {
         require(
             delay_ >= MINIMUM_DELAY(),
             "Timelock::constructor: Delay must exceed minimum delay."
@@ -107,21 +104,21 @@ contract Timelock is ITimelock {
     /**
      * @dev Returns the time period a tx is valid for execution after eta has elapsed.
      */
-    function GRACE_PERIOD() public override virtual pure returns (uint256) {
+    function GRACE_PERIOD() public pure virtual override returns (uint256) {
         return 14 days;
     }
 
     /**
      * @dev Returns the minimum delay required for execution after a tx is queued
      */
-    function MINIMUM_DELAY() public virtual pure returns (uint256) {
+    function MINIMUM_DELAY() public pure virtual returns (uint256) {
         return 2 days;
     }
 
     /**
      * @dev Returns the maxium delay required for execution after a tx is queued
      */
-    function MAXIMUM_DELAY() public virtual pure returns (uint256) {
+    function MAXIMUM_DELAY() public pure virtual returns (uint256) {
         return 30 days;
     }
 
@@ -208,13 +205,11 @@ contract Timelock is ITimelock {
             "Timelock::queueTransaction: Call must come from admin."
         );
         require(
-            eta >= getBlockTimestamp().add(delay),
+            eta >= getBlockTimestamp() + delay,
             "Timelock::queueTransaction: Estimated execution block must satisfy delay."
         );
 
-        txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
-        );
+        txHash = keccak256(abi.encode(target, value, signature, data, eta));
         queuedTransactions[txHash] = true;
 
         emit QueueTransaction(txHash, target, value, signature, data, eta);
@@ -281,7 +276,7 @@ contract Timelock is ITimelock {
             "Timelock::executeTransaction: Transaction hasn't surpassed time lock."
         );
         require(
-            getBlockTimestamp() <= eta.add(GRACE_PERIOD()),
+            getBlockTimestamp() <= eta + GRACE_PERIOD(),
             "Timelock::executeTransaction: Transaction is stale."
         );
 
@@ -308,14 +303,7 @@ contract Timelock is ITimelock {
             "Timelock::executeTransaction: Transaction execution reverted."
         );
 
-        emit ExecuteTransaction(
-            txHash,
-            target,
-            value,
-            signature,
-            data,
-            eta
-        );
+        emit ExecuteTransaction(txHash, target, value, signature, data, eta);
 
         return returnData;
     }

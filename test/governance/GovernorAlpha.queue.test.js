@@ -35,7 +35,7 @@ contract('GovernorAlpha.queue', (accounts) => {
         const {
             governorAlpha,
             timelock,
-            mockUSDV,
+            mockUsdv,
         } = await deployMock(accounts);
 
         const {
@@ -45,8 +45,8 @@ contract('GovernorAlpha.queue', (accounts) => {
             deploy: true,
         });
 
-        await mockUSDV.mint(accounts.account0, proposalFee);
-        await mockUSDV.approve(governorAlpha.address, proposalFee);
+        await mockUsdv.mint(accounts.account0, proposalFee);
+        await mockUsdv.approve(governorAlpha.address, proposalFee);
 
         const {
             signatures,
@@ -74,7 +74,7 @@ contract('GovernorAlpha.queue', (accounts) => {
         );
 
         this.governorAlpha = governorAlpha;
-        this.mockUSDV = mockUSDV;
+        this.mockUsdv = mockUsdv;
     });
 
     it('fails when for-votes are less than or equal to-against votes', async function () {
@@ -97,7 +97,7 @@ contract('GovernorAlpha.queue', (accounts) => {
     });
 
     it('fails when for-votes are less than quorum required', async function () {
-        await this.mockUSDV.mint(accounts.account0, parseUnits(500000, 18));
+        await this.mockUsdv.mint(accounts.account0, parseUnits(500000, 18));
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha: this.governorAlpha,
@@ -114,7 +114,7 @@ contract('GovernorAlpha.queue', (accounts) => {
         const {
             governorAlpha,
             timelock,
-            mockUSDV,
+            mockUsdv,
         } = await deployMock();
         await governorAlpha.setTimelock(timelock.address);
 
@@ -124,8 +124,8 @@ contract('GovernorAlpha.queue', (accounts) => {
             timelock,
         });
 
-        await mockUSDV.mint(accounts.account0, proposalFee);
-        await mockUSDV.approve(governorAlpha.address, proposalFee);
+        await mockUsdv.mint(accounts.account0, proposalFee);
+        await mockUsdv.approve(governorAlpha.address, proposalFee);
 
         const {
             signatures,
@@ -171,7 +171,7 @@ contract('GovernorAlpha.queue', (accounts) => {
         const {
             governorAlpha,
             timelock,
-            mockUSDV,
+            mockUsdv,
         } = await deployMock(accounts);
         await governorAlpha.setTimelock(timelock.address);
 
@@ -182,8 +182,8 @@ contract('GovernorAlpha.queue', (accounts) => {
             deploy: true,
         });
 
-        await mockUSDV.mint(accounts.account0, proposalFee);
-        await mockUSDV.approve(governorAlpha.address, proposalFee);
+        await mockUsdv.mint(accounts.account0, proposalFee);
+        await mockUsdv.approve(governorAlpha.address, proposalFee);
 
         const {
             signatures,
@@ -231,7 +231,7 @@ contract('GovernorAlpha.queue', (accounts) => {
             const {
                 governorAlpha,
                 timelock,
-                mockUSDV,
+                mockUsdv,
             } = await deployMock(accounts);
 
             await governorAlpha.setTimelock(timelock.address);
@@ -243,8 +243,8 @@ contract('GovernorAlpha.queue', (accounts) => {
                 deploy: true,
             });
 
-            await mockUSDV.mint(accounts.account0, proposalFee);
-            await mockUSDV.approve(governorAlpha.address, proposalFee);
+            await mockUsdv.mint(accounts.account0, proposalFee);
+            await mockUsdv.approve(governorAlpha.address, proposalFee);
 
             const {
                 signatures,

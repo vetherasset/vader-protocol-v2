@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity =0.6.8;
+pragma solidity =0.8.9;
 
 interface ITimelock {
     function delay() external view returns (uint256);

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Unlicense
 
-pragma solidity =0.6.8;
+pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -27,9 +26,6 @@ import "../../interfaces/tokens/vesting/ILinearVesting.sol";
  */
 contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
     /* ========== LIBRARIES ========== */
-
-    // Used to calculate vested amount safely
-    using SafeMath for uint256;
 
     // Used for safe VADER transfers
     using SafeERC20 for IERC20;
@@ -64,9 +60,9 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
         IERC20 _vader,
         address[] memory vesters,
         uint192[] memory amounts
-    ) public {
+    ) {
         require(
-            _vader != IERC20(0) && vesters.length == amounts.length,
+            _vader != IERC20(_ZERO_ADDRESS) && vesters.length == amounts.length,
             "LinearVesting::constructor: Misconfiguration"
         );
 
@@ -79,7 +75,7 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
                 "LinearVesting::constructor: Incorrect Amount Specified"
             );
             vest[vesters[i]].amount = amounts[i];
-            total = total.add(amounts[i]);
+            total = total + amounts[i];
         }
         require(
             total == _TEAM_ALLOCATION,
@@ -133,9 +129,8 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
 
         require(vestedAmount != 0, "LinearVesting::claim: Nothing to claim");
 
-        // NOTE: Guaranteed to not overflow on cast or underflow on subtraction as vestedAmount <= vester.amount
         vester.amount -= uint192(vestedAmount);
-        vester.lastClaim = _cast(block.timestamp);
+        vester.lastClaim = uint64(block.timestamp);
 
         vest[msg.sender] = vester;
 
@@ -198,7 +193,7 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
         if (block.timestamp >= _end) return amount;
         if (lastClaim == 0) lastClaim = start;
 
-        return amount.mul(block.timestamp.sub(lastClaim)) / _end.sub(lastClaim);
+        return (amount * (block.timestamp - lastClaim)) / (_end - lastClaim);
     }
 
     /**
@@ -209,21 +204,6 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
             start != 0,
             "LinearVesting::_hasStarted: Vesting hasn't started yet"
         );
-    }
-
-    /**
-     * @dev Safely casts the provided timestamp to a uint64.
-     *
-     * A uint64 variable can hold Unix timestamps for billions of years
-     * and as such is a suitable value for our purpose, however, we implement
-     * this function as a sanity check.
-     */
-    function _cast(uint256 ts) private pure returns (uint64) {
-        require(
-            ts <= type(uint64).max,
-            "LinearVesting::_cast: Timestamp out of bounds"
-        );
-        return uint64(ts);
     }
 
     /* ========== MODIFIERS ========== */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Unlicensed
 
-pragma solidity =0.6.8;
+pragma solidity =0.8.9;
 
 import "../interfaces/governance/ITimelock.sol";
 
@@ -8,7 +8,7 @@ contract MockTarget {
     bool public state;
     ITimelock public timelock;
 
-    constructor(address _timelock) public {
+    constructor(address _timelock) {
         timelock = ITimelock(_timelock);
     }
 
