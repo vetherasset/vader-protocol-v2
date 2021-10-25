@@ -13,6 +13,24 @@ import "../../interfaces/reserve/IVaderReserve.sol";
 import "../../interfaces/dex/router/IVaderRouter.sol";
 import "../../interfaces/dex/pool/IVaderPoolFactory.sol";
 
+/*
+ @dev Implementation of {VaderRouter} contract.
+ *
+ * The contract VaderRouter inherits from {Ownable} and {ProtocolConstants} contracts.
+ *
+ * It allows adding of liquidity to Vader pools and facilitate creation of Vader pools if
+ * it does not already exist when depositing liquidity.
+ *
+ * Allows removing of liquidity by the users and claiming the underlying assets from
+ * the Vader pools.
+ *
+ * Allows swapping between native and foreign assets within a single Vader pool.
+ *
+ * Allows swapping of foreign assets across two different Vader pools.
+ *
+ * Contains helper functions to compute the destination asset amount given the exact source
+ * asset amount and vice versa.
+ **/
 contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
     /* ========== LIBRARIES ========== */
 
@@ -21,11 +39,20 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
 
     /* ========== STATE VARIABLES ========== */
 
+    // The address of Vader pool factory contract.
     IVaderPoolFactory public immutable factory;
+
+    // The address of Reserve contract.
     IVaderReserve public reserve;
 
     /* ========== CONSTRUCTOR ========== */
 
+    /*
+     * @dev Initializes contract's state by setting the vader pool factory address.
+     *
+     * Requirements:
+     * - Vader pool factory address must not be zero.
+     **/
     constructor(IVaderPoolFactory _factory) {
         require(
             _factory != IVaderPoolFactory(_ZERO_ADDRESS),
@@ -39,6 +66,14 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    /*
+     * @dev Allows adding of liquidity to the Vader pools.
+     *
+     * Internally calls {addLiquidity} function.
+     *
+     * Returns the amounts of assetA and assetB used in liquidity and
+     * the amount of liquidity units minted.
+     **/
     // NOTE: For Uniswap V2 compliancy, necessary due to stack too deep
     function addLiquidity(
         IERC20 tokenA,
@@ -69,6 +104,22 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
             );
     }
 
+    /*
+     * @dev Allows adding of liquidity to the Vader pools.
+     *
+     * Internally calls {_addLiquidity} function.
+     *
+     * Transfers the amounts of tokenA and tokenB from {msg.sender} to the pool.
+     *
+     * Calls the {mint} function on the pool to deposit liquidity on the behalf of
+     * {to} address.
+     *
+     * Returns the amounts of assetA and assetB used in liquidity and
+     * the amount of liquidity units minted.
+     *
+     * Requirements:
+     * - The current timestamp has not exceeded the param {deadline}.
+     **/
     function addLiquidity(
         IERC20 tokenA,
         IERC20 tokenB,
@@ -98,6 +149,23 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
         liquidity = pool.mint(to);
     }
 
+    /*
+     * @dev Allows removing of liquidity by {msg.sender} and transfers the
+     * underlying assets to {to} address.
+     *
+     * Transfers the NFT with Id {id} representing user's position, to the pool address,
+     * so the pool is able to burn it in the `burn` function call.
+     *
+     * Calls the `burn` function on the pool contract.
+     *
+     * Calls the `reimburseImpermanentLoss` on reserve contract to cover impermanent loss
+     * for the liquidity being removed.
+     *
+     * Requirements:
+     * - The underlying assets amounts of {amountA} and {amountB} must
+     *   be greater than or equal to {amountAMin} and {amountBMin}, respectively.
+     * - The current timestamp has not exceeded the param {deadline}.
+     **/
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -138,6 +206,16 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
         reserve.reimburseImpermanentLoss(msg.sender, coveredLoss);
     }
 
+    /*
+     * @dev Allows swapping of exact source token amount to destination
+     * token amount.
+     *
+     * Internally calls {_swap} function.
+     *
+     * Requirements:
+     * - The destination amount {amountOut} must greater than or equal to param {amountOutMin}.
+     * - The current timestamp has not exceeded the param {deadline}.
+     **/
     function swapExactTokensForTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -153,6 +231,16 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
         );
     }
 
+    /*
+     * @dev Allows swapping of source token amount to exact destination token
+     * amount.
+     *
+     * Internally calls {calculateInGivenOut} and {_swap} functions.
+     *
+     * Requirements:
+     * - Param {amountInMax} must be greater than or equal to the source amount computed {amountIn}.
+     * - The current timestamp has not exceeded the param {deadline}.
+     **/
     function swapTokensForExactTokens(
         uint256 amountOut,
         uint256 amountInMax,
@@ -172,6 +260,13 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    /*
+     * @dev Sets the reserve address and renounces contract's ownership.
+     *
+     * Requirements:
+     * - Only existing owner can call this function.
+     * - Param {_reserve} cannot be a zero address.
+     **/
     function initialize(IVaderReserve _reserve) external onlyOwner {
         require(
             _reserve != IVaderReserve(_ZERO_ADDRESS),
@@ -187,6 +282,24 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
 
     /* ========== PRIVATE FUNCTIONS ========== */
 
+    /*
+     * @dev Allows swapping of assets from within a single Vader pool or
+     * across two different Vader pools.
+     *
+     * In case of a single Vader pool, the native asset can be swapped for foreign
+     * asset and vice versa.
+     *
+     * In case of two Vader pools, the foreign asset is swapped for native asset from
+     * the first Vader pool and the native asset retrieved from the first Vader pool is swapped
+     * for foreign asset from the second Vader pool.
+     *
+     * Requirements:
+     * - Param {path} length can be either 2 or 3.
+     * - If the {path} length is 3 the index 0 and 1 must contain foreign assets' addresses
+     *   and index 1 must contain native asset's address.
+     * - If the {path} length is 2 then either of indexes must contain foreign asset's address
+     *   and the other one must contain native asset's address.
+     **/
     // TODO: Refactor with central pool, perhaps diminishes security? would need directSwap & bridgeSwap
     function _swap(
         uint256 amountIn,
@@ -237,6 +350,11 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
         }
     }
 
+    /*
+     * @dev An internal function that returns Vader pool's address against
+     * the provided assets of {tokenA} and {tokenB} if it exists, otherwise
+     * a new Vader pool created against the provided assets.
+     **/
     // NOTE: DEX allows asymmetric deposits
     function _addLiquidity(
         address tokenA,
@@ -260,6 +378,19 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
         (amountA, amountB) = (amountADesired, amountBDesired);
     }
 
+    /*
+     * @dev Returns the amount of source asset given the amount of destination asset.
+     *
+     * Calls the {calculateSwapReverse} on VaderMath library to compute the source
+     * token amount.
+     *
+     * Requirements:
+     * - Param {path} length can be either 2 or 3.
+     * - If the {path} length is 3 the index 0 and 1 must contain foreign assets' addresses
+     *   and index 1 must contain native asset's address.
+     * - If the {path} length is 2 then either of indexes must contain foreign asset's address
+     *   and the other one must contain native asset's address.
+     **/
     function calculateInGivenOut(uint256 amountOut, address[] calldata path)
         public
         view
@@ -306,6 +437,19 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
         }
     }
 
+    /*
+     * @dev Returns the amount of destination asset given the amount of source asset.
+     *
+     * Calls the {calculateSwap} on VaderMath library to compute the destination
+     * token amount.
+     *
+     * Requirements:
+     * - Param {path} length can be either 2 or 3.
+     * - If the {path} length is 3 the index 0 and 1 must contain foreign assets' addresses
+     *   and index 1 must contain native asset's address.
+     * - If the {path} length is 2 then either of indexes must contain foreign asset's address
+     *   and the other one must contain native asset's address.
+     **/
     function calculateOutGivenIn(uint256 amountIn, address[] calldata path)
         external
         view
@@ -354,6 +498,7 @@ contract VaderRouter is IVaderRouter, ProtocolConstants, Ownable {
 
     /* ========== MODIFIERS ========== */
 
+    // Guard ensuring that the current timestamp has not exceeded the param {deadline}.
     modifier ensure(uint256 deadline) {
         require(deadline >= block.timestamp, "VaderRouter::ensure: Expired");
         _;

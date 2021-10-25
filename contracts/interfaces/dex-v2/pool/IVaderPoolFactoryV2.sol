@@ -2,21 +2,20 @@
 
 pragma solidity =0.8.9;
 
-import "./IVaderPool.sol";
+import "./IVaderPoolV2.sol";
 
-interface IVaderPoolFactory {
+interface IVaderPoolFactoryV2 {
     /* ========== STRUCTS ========== */
 
     /* ========== FUNCTIONS ========== */
 
     function createPool(address tokenA, address tokenB)
         external
-        returns (IVaderPool);
+        returns (IVaderPoolV2);
 
     function getPool(address tokenA, address tokenB)
         external
-        view
-        returns (IVaderPool);
+        returns (IVaderPoolV2);
 
     function nativeAsset() external view returns (address);
 
@@ -25,7 +24,7 @@ interface IVaderPoolFactory {
     event PoolCreated(
         address token0,
         address token1,
-        IVaderPool pool,
-        uint256 index
+        IVaderPoolV2 pool,
+        uint256 totalPools
     );
 }

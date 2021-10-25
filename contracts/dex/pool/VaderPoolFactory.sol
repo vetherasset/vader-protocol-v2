@@ -9,7 +9,17 @@ import "../../shared/ProtocolConstants.sol";
 import "../../interfaces/shared/IERC20Extended.sol";
 import "../../interfaces/dex/pool/IVaderPoolFactory.sol";
 
-// TBD
+/*
+ * @dev Implementation of {VaderPoolFactory} contract.
+ *
+ * The VaderPoolFactory contract inherits from {Ownable} and {ProtocolConstants} contracts.
+ *
+ * Keeps track of all the created Vader pools through {getPool} mapping and
+ * {allPools} array. Also stores the address of asset used as native asset
+ * across all of the Vader pools created through the factory.
+ *
+ * Allows creation of new Vader pools.
+ **/
 contract VaderPoolFactory is IVaderPoolFactory, ProtocolConstants, Ownable {
     /* ========== STATE VARIABLES ========== */
 
@@ -29,6 +39,17 @@ contract VaderPoolFactory is IVaderPoolFactory, ProtocolConstants, Ownable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    /*
+     * @dev Allows creation of a Vader pool of native and foreign assets.
+     *
+     * Populates the {getPool} mapping with the newly created Vader pool and
+     * pushes this pool to {allPools} array.
+     *
+     * Requirements:
+     * - Native and foreign assets cannot be the same.
+     * - Foreign asset cannot be the zero address.
+     * - The pool against the specified foreign asset does not already exist.
+     **/
     // NOTE: Between deployment & initialization may be corrupted but chance small
     function createPool(address tokenA, address tokenB)
         external
@@ -58,8 +79,8 @@ contract VaderPoolFactory is IVaderPoolFactory, ProtocolConstants, Ownable {
 
         pool = new VaderPool(
             queueActive,
-            IERC20Extended(tokenA),
-            IERC20Extended(tokenB)
+            IERC20Extended(token0),
+            IERC20Extended(token1)
         );
         getPool[token0][token1] = pool;
         getPool[token1][token0] = pool; // populate mapping in the reverse direction
@@ -69,6 +90,14 @@ contract VaderPoolFactory is IVaderPoolFactory, ProtocolConstants, Ownable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    /*
+     * @dev Allows initializing of the factory contract by owner by setting the
+     * address of native asset for all the Vader pool and also transferring the
+     * contract's ownership to {_dao}.
+     *
+     * Requirements:
+     * - Only onwer can call this function.
+     **/
     function initialize(address _nativeAsset, address _dao) external onlyOwner {
         require(
             _nativeAsset != _ZERO_ADDRESS && _dao != _ZERO_ADDRESS,
@@ -79,6 +108,12 @@ contract VaderPoolFactory is IVaderPoolFactory, ProtocolConstants, Ownable {
         transferOwnership(_dao);
     }
 
+    /*
+     * @dev Allows toggling of queue system of a pool.
+     *
+     * Requirements:
+     * - This function can only be called when DAO is active.
+     **/
     function toggleQueue(address token0, address token1) external onlyDAO {
         getPool[token0][token1].toggleQueue();
     }
