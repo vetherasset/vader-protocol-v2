@@ -6,7 +6,17 @@ import "./BasePool.sol";
 
 import "../../interfaces/dex/pool/IVaderPool.sol";
 
-// TBD
+/*
+ * @dev Implementation of {VaderPool} contract.
+ *
+ * The contract VaderPool inherits from {BasePool} contract and implements
+ * queue system.
+ *
+ * Extends on the liquidity redeeming function by introducing the `burn` function
+ * that internally calls the namesake on `BasePool` contract and computes the
+ * loss covered by the position being redeemed and returns it along with amounts
+ * of native and foreign assets sent.
+ **/
 contract VaderPool is IVaderPool, BasePool {
     /* ========== STATE VARIABLES ========== */
 
@@ -15,6 +25,11 @@ contract VaderPool is IVaderPool, BasePool {
 
     /* ========== CONSTRUCTOR ========== */
 
+    /*
+     * @dev Initializes contract's state by passing addresses of
+     * native and foreign assets to {BasePool} contract and setting
+     * active status of queue.
+     **/
     constructor(
         bool _queueActive,
         IERC20Extended _nativeAsset,
@@ -27,6 +42,18 @@ contract VaderPool is IVaderPool, BasePool {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    /*
+     * @dev Allows burning of NFT represented by param {id} for liquidity redeeming.
+     *
+     * Deletes the position in {positions} mapping against the burned NFT token.
+     *
+     * Internally calls `_burn` function on {BasePool} contract.
+     *
+     * Calculates the impermanent loss incurred by the position.
+     *
+     * Returns the amounts for native and foreign assets sent to the {to} address
+     * along with the covered loss.
+     **/
     // NOTE: IL is only covered via router!
     function burn(uint256 id, address to)
         external

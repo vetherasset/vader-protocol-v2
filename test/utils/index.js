@@ -22,6 +22,11 @@ module.exports = (artifacts) => {
     const VaderMath = artifacts.require("VaderMath");
     const BasePool = artifacts.require("BasePool");
 
+    // V2
+    const VaderRouterV2 = artifacts.require("VaderRouterV2");
+    const VaderPoolV2 = artifacts.require("VaderPoolV2");
+    const BasePoolV2 = artifacts.require("BasePoolV2");
+
     // Libraries
 
     // Generic Utilities
@@ -197,6 +202,8 @@ module.exports = (artifacts) => {
             governorAlpha.address,
             big(10 * 60), // default delay of 10 minutes
         ],
+        VaderPoolV2: (_, { vader }) => [true, vader.address],
+        VaderRouterV2: (_, { poolV2 }) => [poolV2.address],
     };
 
     // Project Utilities
@@ -217,6 +224,7 @@ module.exports = (artifacts) => {
         const vaderMath = await VaderMath.new();
         await VaderPoolFactory.link("VaderMath", vaderMath.address);
         await VaderRouter.link("VaderMath", vaderMath.address);
+        await VaderPoolV2.link("VaderMath", vaderMath.address);
     };
 
     // Used to retrieve project constants
@@ -306,6 +314,8 @@ module.exports = (artifacts) => {
             ...configs.Timelock(accounts, cached)
         );
 
+        cached.poolV2 = await VaderPoolV2.new(...configs.VaderPoolV2(accounts, cached));
+        cached.routerV2 = await VaderRouterV2.new(...configs.VaderRouterV2(accounts, cached));
 
 
         return cached;
