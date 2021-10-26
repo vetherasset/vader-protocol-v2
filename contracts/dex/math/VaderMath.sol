@@ -9,6 +9,13 @@ library VaderMath {
 
     /* ========== LIBRARY FUNCTIONS ========== */
 
+    /**
+     * @dev Calculates the amount of liquidity units for the {vaderDeposited}
+     * and {assetDeposited} amounts across {totalPoolUnits}.
+     *
+     * The {vaderBalance} and {assetBalance} are taken into account in order to
+     * calculate any necessary slippage adjustment.
+     */
     function calculateLiquidityUnits(
         uint256 vaderDeposited,
         uint256 vaderBalance,
@@ -35,6 +42,10 @@ library VaderMath {
         return ((totalPoolUnits * poolUnitFactor) / denominator) * slip;
     }
 
+    /**
+    * @dev Calculates the necessary slippage adjustment for the {vaderDeposited} and {assetDeposited}
+    * amounts across the total {vaderBalance} and {assetBalance} amounts.
+    */
     function calculateSlipAdjustment(
         uint256 vaderDeposited,
         uint256 vaderBalance,
@@ -55,13 +66,20 @@ library VaderMath {
         return ONE - (delta(vaderAsset, assetVader) / denominator);
     }
 
-    // TODO: Vader Formula Differs https://github.com/vetherasset/vaderprotocol-contracts/blob/main/contracts/Utils.sol#L347-L356
+    /**
+    * @dev Calculates the loss based on the supplied {releasedVader} and {releasedAsset}
+    * compared to the supplied {originalVader} and {originalAsset}.
+    */
     function calculateLoss(
         uint256 originalVader,
         uint256 originalAsset,
         uint256 releasedVader,
         uint256 releasedAsset
     ) public pure returns (uint256 loss) {
+        //
+        // TODO: Vader Formula Differs https://github.com/vetherasset/vaderprotocol-contracts/blob/main/contracts/Utils.sol#L347-L356
+        //
+
         // [(A0 * P1) + V0]
         uint256 originalValue = ((originalAsset * releasedVader) /
             releasedAsset) + originalVader;
@@ -74,6 +92,10 @@ library VaderMath {
         if (originalValue > releasedValue) loss = originalValue - releasedValue;
     }
 
+    /**
+    * @dev Calculates the {amountOut} of the swap based on the supplied {amountIn}
+    * across the supplied {reserveIn} and {reserveOut} amounts.
+    */
     function calculateSwap(
         uint256 amountIn,
         uint256 reserveIn,
@@ -88,6 +110,10 @@ library VaderMath {
         amountOut = numerator / denominator;
     }
 
+    /**
+    * @dev Calculates the {amountIn} of the swap based on the supplied {amountOut}
+    * across the supplied {reserveIn} and {reserveOut} amounts.
+    */
     function calculateSwapReverse(
         uint256 amountOut,
         uint256 reserveIn,
@@ -123,14 +149,24 @@ library VaderMath {
         amountIn = numerator / denominator;
     }
 
+    /**
+    * @dev Calculates the difference between the supplied {a} and {b} values as a positive number.
+    */
     function delta(uint256 a, uint256 b) public pure returns (uint256) {
         return a > b ? a - b : b - a;
     }
 
+    /**
+    * @dev Calculates the power of 2 of the supplied {a} value.
+    */
     function pow(uint256 a) public pure returns (uint256) {
         return a * a;
     }
 
+    /**
+    * @dev Calculates the square root {c} of the supplied {a} value utilizing the Babylonian method:
+    * https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
+    */
     function root(uint256 a) public pure returns (uint256 c) {
         if (a > 3) {
             c = a;
