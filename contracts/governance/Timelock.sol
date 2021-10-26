@@ -112,7 +112,7 @@ contract Timelock is ITimelock {
      * @dev Returns the minimum delay required for execution after a tx is queued
      */
     function MINIMUM_DELAY() public pure virtual returns (uint256) {
-        return 2 days;
+        return 1 minutes;
     }
 
     /**

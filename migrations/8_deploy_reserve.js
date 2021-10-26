@@ -1,13 +1,13 @@
 const Vader = artifacts.require("Vader");
-const VaderRouter = artifacts.require("VaderRouter");
+const VaderRouterV2 = artifacts.require("VaderRouterV2");
 const VaderReserve = artifacts.require("VaderReserve");
 
 module.exports = async function (deployer, network, accounts) {
     const vader = await Vader.deployed();
-    const router = await VaderRouter.deployed();
+    const router = await VaderRouterV2.deployed();
 
     if (network !== "kovan") {
-        throw new Error("fix dao address");
+        throw new Error("fix parameters for mainnet");
     }
 
     // switch to DAO after all contracts are deployed

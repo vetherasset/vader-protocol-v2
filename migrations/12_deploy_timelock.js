@@ -5,5 +5,9 @@ module.exports = async function (deployer, network, accounts) {
     // TODO: delay
     const delay = 60;
 
+    if (network !== "kovan") {
+        throw new Error("fix parameters for mainnet");
+    }
+
     await deployer.deploy(Timelock, admin, delay);
 };

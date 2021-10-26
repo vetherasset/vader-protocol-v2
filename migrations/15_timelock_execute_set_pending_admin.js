@@ -5,8 +5,12 @@ module.exports = async function (deployer, network, accounts) {
     const gov = await GovernorAlpha.deployed();
     const timelock = await Timelock.deployed();
 
+    if (network !== "kovan") {
+        throw new Error("fix parameters for mainnet");
+    }
+
     // edit for each transaction
-    const eta = 1634800752;
+    const eta = 1635234532;
     const data = web3.eth.abi.encodeParameter("address", gov.address);
 
     const tx = await timelock.executeTransaction(

@@ -16,6 +16,10 @@ module.exports = async function (deployer, network, accounts) {
     // TODO: council address
     const council = accounts[0];
 
+    if (network !== "kovan") {
+        throw new Error("fix parameters for mainnet");
+    }
+
     await deployer.deploy(
         GovernorAlpha,
         vault.address,
