@@ -3,6 +3,10 @@ const VaderRouterV2 = artifacts.require("VaderRouterV2");
 const VaderReserve = artifacts.require("VaderReserve");
 
 module.exports = async function (deployer, network, accounts) {
+    // skip development
+    if (network == "development") {
+        return
+    }
     const vader = await Vader.deployed();
     const router = await VaderRouterV2.deployed();
 

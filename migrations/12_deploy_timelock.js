@@ -1,6 +1,10 @@
 const Timelock = artifacts.require("Timelock");
 
 module.exports = async function (deployer, network, accounts) {
+    // skip development
+    if (network == "development") {
+        return
+    }
     const admin = accounts[0];
     // TODO: delay
     const delay = 60;

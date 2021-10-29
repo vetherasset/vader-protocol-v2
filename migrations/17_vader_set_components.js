@@ -4,6 +4,10 @@ const LinearVesting = artifacts.require("LinearVesting");
 const USDV = artifacts.require("USDV");
 
 module.exports = async function (deployer, network, accounts) {
+    // skip development
+    if (network == "development") {
+        return
+    }
     const vader = await Vader.deployed();
     const converter = await Converter.deployed();
     const vesting = await LinearVesting.deployed();

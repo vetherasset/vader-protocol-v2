@@ -3,6 +3,11 @@ const Vader = artifacts.require("Vader");
 const LinearVesting = artifacts.require("LinearVesting");
 
 module.exports = async function (deployer, network) {
+    // skip development
+    if (network == "development") {
+        return
+    }
+
     const vader = await Vader.deployed();
 
     // TODO: fix migration for mainnet

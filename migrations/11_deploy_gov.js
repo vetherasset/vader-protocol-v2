@@ -4,6 +4,10 @@ const USDV = artifacts.require("USDV");
 const GovernorAlpha = artifacts.require("GovernorAlpha");
 
 module.exports = async function (deployer, network, accounts) {
+    // skip development
+    if (network == "development") {
+        return
+    }
     const vault = await MockVault.deployed();
     const usdv = await USDV.deployed();
 

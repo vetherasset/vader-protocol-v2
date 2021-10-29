@@ -3,6 +3,10 @@ const VaderMath = artifacts.require("VaderMath");
 const VaderPoolV2 = artifacts.require("VaderPoolV2");
 
 module.exports = async function (deployer, network) {
+    // skip development
+    if (network == "development") {
+        return
+    }
     await deployer.link(VaderMath, VaderPoolV2);
     
     // TODO: queue active and native asset (USDV) for mainnet
