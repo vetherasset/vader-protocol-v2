@@ -7,7 +7,7 @@ module.exports = async function (deployer, network) {
 
     // TODO: fix migration for mainnet
     if (network !== "kovan") {
-        throw new Error("Only kovan. Fix vesters and amounts");
+        throw new Error("fix parameters for mainnet");
     }
 
     const vesters = ["0x436b9C3A2E29bC2Df6ac1Ef5C5AC35b7b337A43d"];

@@ -2,28 +2,162 @@
 
 pragma solidity =0.8.9;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "./BasePoolV2.sol";
 
+import "../../interfaces/shared/IERC20Extended.sol";
 import "../../interfaces/dex-v2/pool/IVaderPoolV2.sol";
+import "../../interfaces/dex-v2/wrapper/ILPWrapper.sol";
+import "../../interfaces/dex-v2/synth/ISynthFactory.sol";
 
-contract VaderPoolV2 is IVaderPoolV2, BasePoolV2 {
+/*
+ * @dev Implementation of {VaderPoolV2} contract.
+ *
+ * The contract VaderPool inherits from {BasePoolV2} contract and implements
+ * queue system.
+ *
+ * Extends on the liquidity redeeming function by introducing the `burn` function
+ * that internally calls the namesake on `BasePoolV2` contract and computes the
+ * loss covered by the position being redeemed and returns it along with amounts
+ * of native and foreign assets sent.
+ **/
+contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
+    /* ========== LIBRARIES ========== */
+
+    // Used for safe token transfers
+    using SafeERC20 for IERC20;
+
     /* ========== STATE VARIABLES ========== */
+
+    // The LP wrapper contract
+    ILPWrapper public immutable wrapper;
+
+    // The Synth Factory
+    ISynthFactory public immutable synthFactory;
 
     // Denotes whether the queue system is active
     bool public queueActive;
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(bool _queueActive, IERC20 _nativeAsset)
-        BasePoolV2(_nativeAsset)
-    {
+    /*
+     * @dev Initialised the contract state by passing the native asset's address
+     * to the inherited {BasePoolV2} contract's constructor and setting queue status
+     * to the {queueActive} state variable.
+     **/
+    constructor(
+        bool _queueActive,
+        ILPWrapper _wrapper,
+        ISynthFactory _synthFactory,
+        IERC20 _nativeAsset
+    ) BasePoolV2(_nativeAsset) {
         queueActive = _queueActive;
+        wrapper = _wrapper;
+        synthFactory = _synthFactory;
     }
 
     /* ========== VIEWS ========== */
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    function mintSynth(
+        IERC20 foreignAsset,
+        uint256 nativeDeposit,
+        address from,
+        address to
+    )
+        external
+        override
+        nonReentrant
+        supportedToken(foreignAsset)
+        returns (uint256 amountSynth)
+    {
+        nativeAsset.safeTransferFrom(from, address(this), nativeDeposit);
+
+        ISynth synth = synthFactory.synths(foreignAsset);
+
+        if (synth == ISynth(_ZERO_ADDRESS))
+            synth = synthFactory.createSynth(
+                IERC20Extended(address(foreignAsset))
+            );
+
+        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
+            foreignAsset
+        ); // gas savings
+
+        amountSynth = VaderMath.calculateSwap(
+            nativeDeposit,
+            reserveNative,
+            reserveForeign
+        );
+
+        // TODO: Clarify
+        _update(
+            foreignAsset,
+            reserveNative + nativeDeposit,
+            reserveForeign,
+            reserveNative,
+            reserveForeign
+        );
+
+        synth.mint(to, amountSynth);
+    }
+
+    function burnSynth(
+        IERC20 foreignAsset,
+        uint256 synthAmount,
+        address to
+    ) external override nonReentrant returns (uint256 amountNative) {
+        ISynth synth = synthFactory.synths(foreignAsset);
+
+        require(
+            synth != ISynth(_ZERO_ADDRESS),
+            "VaderPoolV2::burnSynth: Inexistent Synth"
+        );
+
+        require(
+            synthAmount > 0,
+            "VaderPoolV2::burnSynth: Insufficient Synth Amount"
+        );
+
+        IERC20(synth).safeTransferFrom(msg.sender, address(this), synthAmount);
+        synth.burn(synthAmount);
+
+        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
+            foreignAsset
+        ); // gas savings
+
+        amountNative = VaderMath.calculateSwap(
+            synthAmount,
+            reserveForeign,
+            reserveNative
+        );
+
+        // TODO: Clarify
+        _update(
+            foreignAsset,
+            reserveNative - amountNative,
+            reserveForeign,
+            reserveNative,
+            reserveForeign
+        );
+
+        nativeAsset.safeTransfer(to, amountNative);
+    }
+
+    /*
+     * @dev Allows burning of NFT represented by param {id} for liquidity redeeming.
+     *
+     * Deletes the position in {positions} mapping against the burned NFT token.
+     *
+     * Internally calls `_burn` function on {BasePoolV2} contract.
+     *
+     * Calculates the impermanent loss incurred by the position.
+     *
+     * Returns the amounts for native and foreign assets sent to the {to} address
+     * along with the covered loss.
+     **/
     // NOTE: IL is only covered via router!
     function burn(uint256 id, address to)
         external
@@ -58,6 +192,110 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2 {
             _ONE_YEAR;
     }
 
+    function mintFungible(
+        IERC20 foreignAsset,
+        uint256 nativeDeposit,
+        uint256 foreignDeposit,
+        address from,
+        address to
+    ) external override nonReentrant returns (uint256 liquidity) {
+        IERC20Extended lp = wrapper.tokens(foreignAsset);
+
+        require(
+            lp != IERC20Extended(_ZERO_ADDRESS),
+            "VaderPoolV2::mintFungible: Unsupported Token"
+        );
+
+        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
+            foreignAsset
+        ); // gas savings
+
+        nativeAsset.safeTransferFrom(from, address(this), nativeDeposit);
+        foreignAsset.safeTransferFrom(from, address(this), foreignDeposit);
+
+        PairInfo storage pair = pairInfo[foreignAsset];
+        uint256 totalLiquidityUnits = pair.totalSupply;
+        if (totalLiquidityUnits == 0)
+            liquidity = nativeDeposit; // TODO: Contact ThorChain on proper approach
+        else
+            liquidity = VaderMath.calculateLiquidityUnits(
+                nativeDeposit,
+                reserveNative,
+                foreignDeposit,
+                reserveForeign,
+                totalLiquidityUnits
+            );
+
+        require(
+            liquidity > 0,
+            "BasePoolV2::mint: Insufficient Liquidity Provided"
+        );
+
+        pair.totalSupply = totalLiquidityUnits + liquidity;
+
+        _update(
+            foreignAsset,
+            reserveNative + nativeDeposit,
+            reserveForeign + foreignDeposit,
+            reserveNative,
+            reserveForeign
+        );
+
+        lp.mint(to, liquidity);
+
+        emit Mint(from, to, nativeDeposit, foreignDeposit);
+    }
+
+    function burnFungible(
+        IERC20 foreignAsset,
+        uint256 liquidity,
+        address to
+    )
+        external
+        override
+        nonReentrant
+        returns (uint256 amountNative, uint256 amountForeign)
+    {
+        IERC20Extended lp = wrapper.tokens(foreignAsset);
+
+        require(
+            lp != IERC20Extended(_ZERO_ADDRESS),
+            "VaderPoolV2::burnFungible: Unsupported Token"
+        );
+
+        IERC20(lp).safeTransferFrom(msg.sender, address(this), liquidity);
+        lp.burn(liquidity);
+
+        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
+            foreignAsset
+        ); // gas savings
+
+        PairInfo storage pair = pairInfo[foreignAsset];
+        uint256 _totalSupply = pair.totalSupply;
+        amountNative = (liquidity * reserveNative) / _totalSupply;
+        amountForeign = (liquidity * reserveForeign) / _totalSupply;
+
+        require(
+            amountNative > 0 && amountForeign > 0,
+            "BasePoolV2::burn: Insufficient Liquidity Burned"
+        );
+
+        pair.totalSupply = _totalSupply - liquidity;
+
+        nativeAsset.safeTransfer(to, amountNative);
+        foreignAsset.safeTransfer(to, amountForeign);
+
+        _update(
+            foreignAsset,
+            reserveNative - amountNative,
+            reserveForeign - amountForeign,
+            reserveNative,
+            reserveForeign
+        );
+
+        emit Burn(msg.sender, amountNative, amountForeign, to);
+    }
+
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     // TODO: Investigate Necessity
@@ -67,6 +305,12 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2 {
         emit QueueActive(_queueActive);
     }
 
+    /*
+     * @dev Sets the supported state of the token represented by param {foreignAsset}.
+     *
+     * Requirements:
+     * - The param {foreignAsset} is not already a supported token.
+     **/
     function setTokenSupport(IERC20 foreignAsset, bool support)
         external
         override

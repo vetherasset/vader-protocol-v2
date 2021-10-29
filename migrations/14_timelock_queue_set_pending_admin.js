@@ -5,6 +5,10 @@ module.exports = async function (deployer, network, accounts) {
     const gov = await GovernorAlpha.deployed();
     const timelock = await Timelock.deployed();
 
+    if (network !== "kovan") {
+        throw new Error("fix parameters for mainnet");
+    }
+
     // TODO: time lock delay
     const DELAY = 5 * 60;
     const eta = Math.floor(new Date() / 1000) + DELAY;

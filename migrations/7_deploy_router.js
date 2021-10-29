@@ -1,10 +1,10 @@
 const VaderMath = artifacts.require("VaderMath");
-const VaderPoolFactory = artifacts.require("VaderPoolFactory");
-const VaderRouter = artifacts.require("VaderRouter");
+const VaderPoolV2 = artifacts.require("VaderPoolV2");
+const VaderRouterV2 = artifacts.require("VaderRouterV2");
 
 module.exports = async function (deployer) {
-    const factory = await VaderPoolFactory.deployed();
+    const pool = await VaderPoolV2.deployed();
 
-    await deployer.link(VaderMath, VaderRouter);
-    await deployer.deploy(VaderRouter, factory.address);
+    await deployer.link(VaderMath, VaderRouterV2);
+    await deployer.deploy(VaderRouterV2, pool.address);
 };

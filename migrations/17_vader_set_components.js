@@ -9,6 +9,10 @@ module.exports = async function (deployer, network, accounts) {
     const vesting = await LinearVesting.deployed();
     const usdv = await USDV.deployed();
 
+    if (network !== "kovan") {
+        throw new Error("fix parameters for mainnet");
+    }
+
     // switch to DAO after all contracts are deployed
     const dao = accounts[0];
 

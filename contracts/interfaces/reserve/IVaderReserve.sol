@@ -16,5 +16,5 @@ interface IVaderReserve {
     /* ========== EVENTS ========== */
 
     event GrantDistributed(address recipient, uint256 amount);
-    event LossCovered(address recipient, uint256 amount);
+    event LossCovered(address recipient, uint256 amount, uint256 actualAmount);
 }

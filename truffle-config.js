@@ -18,11 +18,11 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
-// const infuraKey = "fj4jll3k.....";
-//
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
+require("dotenv").config();
+
+const HDWalletProvider = require("@truffle/hdwallet-provider");
+const fs = require("fs");
+const mnemonic = fs.readFileSync(".secret").toString().trim();
 
 module.exports = {
     /**
@@ -66,6 +66,18 @@ module.exports = {
         // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
         // skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
         // },
+        kovan: {
+            provider: () =>
+                new HDWalletProvider(
+                    mnemonic,
+                    `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`
+                ),
+            network_id: 42,
+            gas: 5500000,
+            confirmations: 2,
+            timeoutBlocks: 200,
+            skipDryRun: true,
+        },
         // Useful for private networks
         // private: {
         // provider: () => new HDWalletProvider(mnemonic, `https://network.io`),
@@ -91,5 +103,8 @@ module.exports = {
             },
         },
     },
-    plugins: ["solidity-coverage"],
+    plugins: ["solidity-coverage", "truffle-plugin-verify"],
+    api_keys: {
+        etherscan: process.env.ETHER_SCAN_API_KEY,
+    },
 };

@@ -9,6 +9,7 @@ const {
     UNSET_ADDRESS,
     DEFAULT_CONFIGS,
     TEN_UNITS,
+    parseUnits,
 
     // Library Functions
     verboseAccounts,
@@ -19,7 +20,7 @@ const {
     PROJECT_CONSTANTS,
 } = require("../utils")(artifacts);
 
-contract("VaderReserve", (accounts) =>  {
+contract.only("VaderReserve", (accounts) =>  {
     describe("construction", () => {
         it("should not allow construction with incorrect arguments", async () => {
             if (Array.isArray(accounts))
@@ -27,7 +28,7 @@ contract("VaderReserve", (accounts) =>  {
 
             await assertErrors(
                 deployMock(accounts, {
-                    VaderReserve: () => [UNSET_ADDRESS, UNSET_ADDRESS, UNSET_ADDRESS],
+                    VaderReserve: () => [UNSET_ADDRESS],
                 }),
                 "VaderReserve::constructor: Incorrect Arguments"
             );
@@ -37,10 +38,30 @@ contract("VaderReserve", (accounts) =>  {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
 
-            const { router, vader, reserve } = await deployMock(accounts);
+            const { reserve, vader } = await deployMock(accounts);
+            
+            // Check the state
             assert.notEqual(reserve.address, UNSET_ADDRESS);
-            assert.equal(await reserve.vader(), await vader.address);
-            assert.equal(await reserve.router(), await router.address);
+            assert.equal(await reserve.vader(), vader.address);
+            assert.equal(await reserve.router(), UNSET_ADDRESS);
+        });
+    });
+
+    describe("initialize", () => {
+        it("should not allow to initialize with incorrect arguments", async () => {
+            if (Array.isArray(accounts))
+                accounts = await verboseAccounts(accounts);
+
+            const { reserve, router } = await deployMock(accounts);
+            
+            await assertErrors(reserve.initialize(UNSET_ADDRESS, accounts.dao), 
+            "VaderReserve::initialize: Incorrect Arguments");
+            
+            await assertErrors(reserve.initialize(router.address, UNSET_ADDRESS), 
+            "VaderReserve::initialize: Incorrect Arguments");
+
+            await assertErrors(reserve.initialize(router.address, accounts.dao, { from: accounts.account1 }), 
+            "Ownable: caller is not the owner");
         });
     });
 
@@ -53,6 +74,30 @@ contract("VaderReserve", (accounts) =>  {
             const amount = await reserve.reserve();
             // We dont have a reserve balance yet
             assert.equal(amount, 0);
+        });
+    });
+
+    describe("grant", () => {
+        it("should grant from the owners account and check the balance and state", async () => {
+            if (Array.isArray(accounts))
+                accounts = await verboseAccounts(accounts);
+
+            const { reserve, routerV2, vader } = await deployMock(accounts);
+
+            // Init
+            await reserve.initialize(routerV2.address, accounts.dao);
+
+            // Check if the ownership is now the dao
+            assert.equal(await reserve.owner(), accounts.dao);
+
+            const amount = parseUnits(1000, 18);
+
+            // Grant once
+            await reserve.grant(accounts.account1, amount, { from: accounts.dao });
+            
+            // Check the vader balance
+            // For the moment it should be 0 as we dont have vader yet
+            assertBn(await vader.balanceOf(accounts.account1), 0);
         });
     });
 
@@ -72,11 +117,17 @@ contract("VaderReserve", (accounts) =>  {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
 
-            const { reserve } = await deployMock(accounts);
+            const { reserve, routerV2 } = await deployMock(accounts);
+
+            // Init
+            await reserve.initialize(routerV2.address, accounts.dao);
+
+            const amount = parseUnits(1000, 18);
+
             // Grant once
-            await reserve.grant(accounts.account1, 1000, { from: accounts.dao });
+            await reserve.grant(accounts.account1, amount, { from: accounts.dao });
             // Grant again
-            await assertErrors(reserve.grant(accounts.account1, 2000, { from: accounts.dao }), 
+            await assertErrors(reserve.grant(accounts.account1, amount, { from: accounts.dao }), 
             "VaderReserve::throttle: Grant Too Fast");
         });
     });

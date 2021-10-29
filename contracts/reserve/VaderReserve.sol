@@ -21,7 +21,7 @@ contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
     IERC20 public immutable vader;
 
     // Router address for IL awards
-    address public immutable router;
+    address public router;
 
     // Tracks last grant time for throttling
     uint256 public lastGrant;
@@ -29,19 +29,13 @@ contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        IERC20 _vader,
-        address _router,
-        address _dao
+        IERC20 _vader
     ) {
         require(
-            _vader != IERC20(_ZERO_ADDRESS) &&
-                _router != _ZERO_ADDRESS &&
-                _dao != _ZERO_ADDRESS,
+            _vader != IERC20(_ZERO_ADDRESS),
             "VaderReserve::constructor: Incorrect Arguments"
         );
         vader = _vader;
-        router = _router;
-        transferOwnership(_dao);
     }
 
     /* ========== VIEWS ========== */
@@ -69,6 +63,16 @@ contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
+    function initialize(address _router, address _dao) external onlyOwner {
+         require(
+            _router != _ZERO_ADDRESS &&
+                _dao != _ZERO_ADDRESS,
+            "VaderReserve::initialize: Incorrect Arguments"
+        );
+        router = _router;
+        transferOwnership(_dao);
+    }
+
     function reimburseImpermanentLoss(address recipient, uint256 amount)
         external
         override
@@ -78,11 +82,11 @@ contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
             "VaderReserve::reimburseImpermanentLoss: Insufficient Priviledges"
         );
 
-        amount = _min(reserve(), amount);
+        uint256 actualAmount = _min(reserve(), amount);
 
-        vader.safeTransfer(recipient, amount);
+        vader.safeTransfer(recipient, actualAmount);
 
-        emit LossCovered(recipient, amount);
+        emit LossCovered(recipient, amount, actualAmount);
     }
 
     /* ========== INTERNAL FUNCTIONS ========== */
