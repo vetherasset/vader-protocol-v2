@@ -36,6 +36,8 @@ interface IBasePoolV2 {
 
     function positionForeignAsset(uint256 id) external view returns (IERC20);
 
+    function pairSupply(IERC20 foreignAsset) external view returns (uint256);
+
     function doubleSwap(
         IERC20 foreignAssetA,
         IERC20 foreignAssetB,

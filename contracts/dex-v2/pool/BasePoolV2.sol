@@ -2,7 +2,6 @@
 
 pragma solidity =0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -37,13 +36,7 @@ import "../../interfaces/dex-v2/pool/IBasePoolV2.sol";
  * Keeps track of the cumulative prices for both native and foreign assets for
  * pairs and updates them after minting and burning of liquidity, and swapping of assets.
  **/
-contract BasePoolV2 is
-    IBasePoolV2,
-    GasThrottle,
-    ERC721,
-    Ownable,
-    ReentrancyGuard
-{
+contract BasePoolV2 is IBasePoolV2, GasThrottle, ERC721, ReentrancyGuard {
     /* ========== LIBRARIES ========== */
 
     // Used for safe token transfers
@@ -129,6 +122,15 @@ contract BasePoolV2 is
         returns (IERC20)
     {
         return positions[id].foreignAsset;
+    }
+
+    function pairSupply(IERC20 foreignAsset)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return pairInfo[foreignAsset].totalSupply;
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -562,6 +564,7 @@ contract BasePoolV2 is
     }
 
     /* ========== MODIFIERS ========== */
+
     /*
      * @dev Modifier that only allows continuation of exection if the param
      * {token} is a supported token.

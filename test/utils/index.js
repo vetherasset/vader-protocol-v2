@@ -132,6 +132,8 @@ module.exports = (artifacts) => {
             "account1",
             "account2",
             "account3",
+            "account4",
+            "account5",
             "dao",
             "administrator",
             "voter",
@@ -176,10 +178,8 @@ module.exports = (artifacts) => {
         Vader: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
         VaderPoolFactory: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
         VaderRouter: (_, { factory }) => [factory.address],
-        VaderReserve: ({ dao }, { vader, router }) => [
-            vader.address,
-            router.address,
-            dao,
+        VaderReserve: (_, { vader }) => [
+            vader.address
         ],
         USDV: (_, { vader, reserve }) => [vader.address, reserve.address],
         LinearVesting: ({ account0 }, { vader, ADMINISTRATOR }) => [
@@ -202,7 +202,7 @@ module.exports = (artifacts) => {
             governorAlpha.address,
             big(10 * 60), // default delay of 10 minutes
         ],
-        VaderPoolV2: (_, { vader }) => [true, vader.address],
+        VaderPoolV2: (_, { mockUsdv }) => [true, mockUsdv.address],
         VaderRouterV2: (_, { poolV2 }) => [poolV2.address],
     };
 
@@ -272,10 +272,12 @@ module.exports = (artifacts) => {
             gasPrice: big(0),
         };
 
+
         // Mock Deployments
         cached.vether = await MockToken.new("Vether", "VETH", 18);
         cached.mockUsdv = await MockToken.new("Fake USDV", "USDV", 18);
         cached.dai = await MockToken.new("DAI", "DAI", 18);
+        cached.token = await MockToken.new("TKN", "TKN", 18);
 
         // Project Deployments
         cached.vader = await Vader.new(...configs.Vader(accounts, cached));
@@ -354,6 +356,7 @@ module.exports = (artifacts) => {
         DEFAULT_CONFIGS,
         VaderPool,
         BasePool,
+        BasePoolV2,
 
         // Project Specific Utilities
         advanceEpochs,

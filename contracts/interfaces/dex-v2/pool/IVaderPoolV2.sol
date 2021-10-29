@@ -11,6 +11,33 @@ interface IVaderPoolV2 is IBasePoolV2, IERC721 {
     /* ========== STRUCTS ========== */
     /* ========== FUNCTIONS ========== */
 
+    function mintSynth(
+        IERC20 foreignAsset,
+        uint256 nativeDeposit,
+        address from,
+        address to
+    ) external returns (uint256 amountSynth);
+
+    function burnSynth(
+        IERC20 foreignAsset,
+        uint256 synthAmount,
+        address to
+    ) external returns (uint256 amountNative);
+
+    function mintFungible(
+        IERC20 foreignAsset,
+        uint256 nativeDeposit,
+        uint256 foreignDeposit,
+        address from,
+        address to
+    ) external returns (uint256 liquidity);
+
+    function burnFungible(
+        IERC20 foreignAsset,
+        uint256 liquidity,
+        address to
+    ) external returns (uint256 amountNative, uint256 amountForeign);
+
     function burn(uint256 id, address to)
         external
         returns (
