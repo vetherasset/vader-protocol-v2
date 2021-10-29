@@ -31,6 +31,7 @@
         "truffle": "^5.4.16"
     },
     "devDependencies": {
+        "eth-gas-reporter": "^0.2.22",
         "truffle-plugin-verify": "^0.5.15"
     }
 }
