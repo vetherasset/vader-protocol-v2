@@ -31,10 +31,10 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
     /* ========== STATE VARIABLES ========== */
 
     // The LP wrapper contract
-    ILPWrapper public immutable wrapper;
+    ILPWrapper public wrapper;
 
     // The Synth Factory
-    ISynthFactory public immutable synthFactory;
+    ISynthFactory public synthFactory;
 
     // Denotes whether the queue system is active
     bool public queueActive;
@@ -46,20 +46,35 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * to the inherited {BasePoolV2} contract's constructor and setting queue status
      * to the {queueActive} state variable.
      **/
-    constructor(
-        bool _queueActive,
-        ILPWrapper _wrapper,
-        ISynthFactory _synthFactory,
-        IERC20 _nativeAsset
-    ) BasePoolV2(_nativeAsset) {
+    constructor(bool _queueActive, IERC20 _nativeAsset)
+        BasePoolV2(_nativeAsset)
+    {
         queueActive = _queueActive;
-        wrapper = _wrapper;
-        synthFactory = _synthFactory;
     }
 
     /* ========== VIEWS ========== */
 
     /* ========== MUTATIVE FUNCTIONS ========== */
+
+    function initialize(ILPWrapper _wrapper, ISynthFactory _synthFactory)
+        external
+        onlyOwner
+    {
+        require(
+            wrapper == ILPWrapper(_ZERO_ADDRESS),
+            "VaderPoolV2::initialize: Already initialized"
+        );
+        require(
+            _wrapper != ILPWrapper(_ZERO_ADDRESS),
+            "VaderPoolV2::initialize: Incorrect Wrapper Specified"
+        );
+        require(
+            _synthFactory != ISynthFactory(_ZERO_ADDRESS),
+            "VaderPoolV2::initialize: Incorrect SynthFactory Specified"
+        );
+        wrapper = _wrapper;
+        synthFactory = _synthFactory;
+    }
 
     function mintSynth(
         IERC20 foreignAsset,
@@ -228,7 +243,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
 
         require(
             liquidity > 0,
-            "BasePoolV2::mint: Insufficient Liquidity Provided"
+            "VaderPoolV2::mintFungible: Insufficient Liquidity Provided"
         );
 
         pair.totalSupply = totalLiquidityUnits + liquidity;
@@ -277,7 +292,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
 
         require(
             amountNative > 0 && amountForeign > 0,
-            "BasePoolV2::burn: Insufficient Liquidity Burned"
+            "VaderPoolV2::burnFungible: Insufficient Liquidity Burned"
         );
 
         pair.totalSupply = _totalSupply - liquidity;
@@ -321,6 +336,20 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
             "VaderPoolV2::supportToken: Already At Desired State"
         );
         supported[foreignAsset] = support;
+    }
+
+    /*
+     * @dev Sets the supported state of the token represented by param {foreignAsset}.
+     *
+     * Requirements:
+     * - The param {foreignAsset} is not already a supported token.
+     **/
+    function setFungibleTokenSupport(IERC20 foreignAsset)
+        external
+        override
+        onlyOwner
+    {
+        wrapper.createWrapper(foreignAsset);
     }
 
     /* ========== INTERNAL FUNCTIONS ========== */

@@ -20,7 +20,7 @@ const {
     PROJECT_CONSTANTS,
 } = require("../utils")(artifacts);
 
-contract.only("VaderReserve", (accounts) =>  {
+contract("VaderReserve", (accounts) => {
     describe("construction", () => {
         it("should not allow construction with incorrect arguments", async () => {
             if (Array.isArray(accounts))
@@ -39,7 +39,7 @@ contract.only("VaderReserve", (accounts) =>  {
                 accounts = await verboseAccounts(accounts);
 
             const { reserve, vader } = await deployMock(accounts);
-            
+
             // Check the state
             assert.notEqual(reserve.address, UNSET_ADDRESS);
             assert.equal(await reserve.vader(), vader.address);
@@ -53,15 +53,23 @@ contract.only("VaderReserve", (accounts) =>  {
                 accounts = await verboseAccounts(accounts);
 
             const { reserve, router } = await deployMock(accounts);
-            
-            await assertErrors(reserve.initialize(UNSET_ADDRESS, accounts.dao), 
-            "VaderReserve::initialize: Incorrect Arguments");
-            
-            await assertErrors(reserve.initialize(router.address, UNSET_ADDRESS), 
-            "VaderReserve::initialize: Incorrect Arguments");
 
-            await assertErrors(reserve.initialize(router.address, accounts.dao, { from: accounts.account1 }), 
-            "Ownable: caller is not the owner");
+            await assertErrors(
+                reserve.initialize(UNSET_ADDRESS, accounts.dao),
+                "VaderReserve::initialize: Incorrect Arguments"
+            );
+
+            await assertErrors(
+                reserve.initialize(router.address, UNSET_ADDRESS),
+                "VaderReserve::initialize: Incorrect Arguments"
+            );
+
+            await assertErrors(
+                reserve.initialize(router.address, accounts.dao, {
+                    from: accounts.account1,
+                }),
+                "Ownable: caller is not the owner"
+            );
         });
     });
 
@@ -93,8 +101,10 @@ contract.only("VaderReserve", (accounts) =>  {
             const amount = parseUnits(1000, 18);
 
             // Grant once
-            await reserve.grant(accounts.account1, amount, { from: accounts.dao });
-            
+            await reserve.grant(accounts.account1, amount, {
+                from: accounts.dao,
+            });
+
             // Check the vader balance
             // For the moment it should be 0 as we dont have vader yet
             assertBn(await vader.balanceOf(accounts.account1), 0);
@@ -107,8 +117,10 @@ contract.only("VaderReserve", (accounts) =>  {
                 accounts = await verboseAccounts(accounts);
 
             const { reserve } = await deployMock(accounts);
-            await assertErrors(reserve.reimburseImpermanentLoss(accounts.account1, 1000), 
-            "VaderReserve::reimburseImpermanentLoss: Insufficient Priviledges");
+            await assertErrors(
+                reserve.reimburseImpermanentLoss(accounts.account1, 1000),
+                "VaderReserve::reimburseImpermanentLoss: Insufficient Priviledges"
+            );
         });
     });
 
@@ -125,10 +137,16 @@ contract.only("VaderReserve", (accounts) =>  {
             const amount = parseUnits(1000, 18);
 
             // Grant once
-            await reserve.grant(accounts.account1, amount, { from: accounts.dao });
+            await reserve.grant(accounts.account1, amount, {
+                from: accounts.dao,
+            });
             // Grant again
-            await assertErrors(reserve.grant(accounts.account1, amount, { from: accounts.dao }), 
-            "VaderReserve::throttle: Grant Too Fast");
+            await assertErrors(
+                reserve.grant(accounts.account1, amount, {
+                    from: accounts.dao,
+                }),
+                "VaderReserve::throttle: Grant Too Fast"
+            );
         });
     });
 });

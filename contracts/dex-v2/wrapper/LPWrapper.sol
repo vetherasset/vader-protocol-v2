@@ -17,7 +17,7 @@ contract LPWrapper is ILPWrapper, ProtocolConstants, Ownable {
         transferOwnership(pool);
     }
 
-    function createWrapper(IERC20 foreignAsset) external onlyOwner {
+    function createWrapper(IERC20 foreignAsset) external override onlyOwner {
         require(
             tokens[foreignAsset] == IERC20Extended(_ZERO_ADDRESS),
             "LPWrapper::createWrapper: Already Created"

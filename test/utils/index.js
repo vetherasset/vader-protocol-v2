@@ -26,6 +26,10 @@ module.exports = (artifacts) => {
     const VaderRouterV2 = artifacts.require("VaderRouterV2");
     const VaderPoolV2 = artifacts.require("VaderPoolV2");
     const BasePoolV2 = artifacts.require("BasePoolV2");
+    const Synth = artifacts.require("Synth");
+    const SynthFactory = artifacts.require("SynthFactory");
+    const LPToken = artifacts.require("LPToken");
+    const LPWrapper = artifacts.require("LPWrapper");
 
     // Libraries
 
@@ -178,9 +182,7 @@ module.exports = (artifacts) => {
         Vader: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
         VaderPoolFactory: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
         VaderRouter: (_, { factory }) => [factory.address],
-        VaderReserve: (_, { vader }) => [
-            vader.address
-        ],
+        VaderReserve: (_, { vader }) => [vader.address],
         USDV: (_, { vader, reserve }) => [vader.address, reserve.address],
         LinearVesting: ({ account0 }, { vader, ADMINISTRATOR }) => [
             vader.address,
@@ -204,15 +206,17 @@ module.exports = (artifacts) => {
         ],
         VaderPoolV2: (_, { mockUsdv }) => [true, mockUsdv.address],
         VaderRouterV2: (_, { poolV2 }) => [poolV2.address],
+        LPWrapper: (_, { poolV2 }) => [poolV2.address],
+        SynthFactory: (_, { poolV2 }) => [poolV2.address],
     };
 
     // Project Utilities
 
     const advanceEpochs = async (vader, eras = 1) => {
         await time.increaseTo(
-            (await vader.lastEmission()).add(
-                PROJECT_CONSTANTS.EMISSION_ERA.mul(big(eras))
-            )
+            (
+                await vader.lastEmission()
+            ).add(PROJECT_CONSTANTS.EMISSION_ERA.mul(big(eras)))
         );
     };
 
@@ -272,12 +276,14 @@ module.exports = (artifacts) => {
             gasPrice: big(0),
         };
 
-
         // Mock Deployments
         cached.vether = await MockToken.new("Vether", "VETH", 18);
         cached.mockUsdv = await MockToken.new("Fake USDV", "USDV", 18);
         cached.dai = await MockToken.new("DAI", "DAI", 18);
         cached.token = await MockToken.new("TKN", "TKN", 18);
+        cached.erc20Dec8 = await MockToken.new("DEC8", "DEC8", 8);
+        cached.erc20Dec12 = await MockToken.new("DEC12", "DEC12", 12);
+        cached.maliciousToken = await MockToken.new("MALC", "MALC", 18);
 
         // Project Deployments
         cached.vader = await Vader.new(...configs.Vader(accounts, cached));
@@ -316,20 +322,36 @@ module.exports = (artifacts) => {
             ...configs.Timelock(accounts, cached)
         );
 
-        cached.poolV2 = await VaderPoolV2.new(...configs.VaderPoolV2(accounts, cached));
-        cached.routerV2 = await VaderRouterV2.new(...configs.VaderRouterV2(accounts, cached));
-
+        cached.poolV2 = await VaderPoolV2.new(
+            ...configs.VaderPoolV2(accounts, cached)
+        );
+        cached.routerV2 = await VaderRouterV2.new(
+            ...configs.VaderRouterV2(accounts, cached)
+        );
+        cached.lpWrapper = await LPWrapper.new(
+            ...configs.LPWrapper(accounts, cached)
+        );
+        cached.synthFactory = await SynthFactory.new(
+            ...configs.SynthFactory(accounts, cached)
+        );
 
         return cached;
     };
 
-    // Helpers 
+    // Helpers
 
     // Mint and approve will mint the balance on the asset contract and approve for the balance the contract address.
-    const mintAndApprove = async (accountAddress, contractAddress, asset, balanceBN) => {
+    const mintAndApprove = async (
+        accountAddress,
+        contractAddress,
+        asset,
+        balanceBN
+    ) => {
         await asset.mint(accountAddress, balanceBN);
-        await asset.approve(contractAddress, balanceBN, { from:accountAddress });
-    }
+        await asset.approve(contractAddress, balanceBN, {
+            from: accountAddress,
+        });
+    };
 
     return {
         // Deployment Function
@@ -357,6 +379,8 @@ module.exports = (artifacts) => {
         VaderPool,
         BasePool,
         BasePoolV2,
+        Synth,
+        LPToken,
 
         // Project Specific Utilities
         advanceEpochs,

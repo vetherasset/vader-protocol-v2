@@ -7,7 +7,6 @@ import "./Synth.sol";
 import "../../interfaces/dex-v2/synth/ISynthFactory.sol";
 
 contract SynthFactory is ISynthFactory, ProtocolConstants, Ownable {
-    address public immutable pool;
     mapping(IERC20 => ISynth) public override synths;
 
     constructor(address _pool) {
@@ -15,7 +14,7 @@ contract SynthFactory is ISynthFactory, ProtocolConstants, Ownable {
             _pool != _ZERO_ADDRESS,
             "SynthFactory::constructor: Misconfiguration"
         );
-        pool = _pool;
+        transferOwnership(_pool);
     }
 
     function createSynth(IERC20Extended token)
@@ -31,7 +30,7 @@ contract SynthFactory is ISynthFactory, ProtocolConstants, Ownable {
 
         Synth synth = new Synth(token);
 
-        synth.transferOwnership(pool);
+        synth.transferOwnership(owner());
 
         synths[IERC20(token)] = synth;
 

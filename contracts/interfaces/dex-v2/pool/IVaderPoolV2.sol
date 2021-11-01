@@ -50,6 +50,8 @@ interface IVaderPoolV2 is IBasePoolV2, IERC721 {
 
     function setTokenSupport(IERC20 foreignAsset, bool support) external;
 
+    function setFungibleTokenSupport(IERC20 foreignAsset) external;
+
     /* ========== EVENTS ========== */
 
     event QueueActive(bool activated);

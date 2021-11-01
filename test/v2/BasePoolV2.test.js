@@ -19,7 +19,7 @@ const {
     // Project Specific Constants
     PROJECT_CONSTANTS,
 
-    mintAndApprove
+    mintAndApprove,
 } = require("../utils")(artifacts);
 
 contract("Base Pool V2", (accounts) => {

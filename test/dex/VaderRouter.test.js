@@ -126,8 +126,6 @@ contract("VaderRouter", (accounts) => {
             );
         });
 
-        
-
         it("should swap and check if state results and balances are valid", async () => {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
@@ -158,8 +156,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             const liquidity = parseUnits(1000000, 18);
 
@@ -204,7 +212,9 @@ contract("VaderRouter", (accounts) => {
             );
 
             // Very low slipage
-            assert(await dai.balanceOf(accounts.account1) >=  parseUnits(45, 16));
+            assert(
+                (await dai.balanceOf(accounts.account1)) >= parseUnits(45, 16)
+            );
         });
 
         // it("should remove liquidity", async () => {
@@ -360,8 +370,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Add a big amount of liquidity
             await router.addLiquidity(
@@ -419,12 +439,19 @@ contract("VaderRouter", (accounts) => {
             );
             assertBn(await dai.balanceOf(poolAddress), expectedPoolDaiBalance);
 
-            
-
             // Mint some tokens and approve
-            await mintAndApprove(accounts.account1, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account1, router.address, dai, balance);
-
+            await mintAndApprove(
+                accounts.account1,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account1,
+                router.address,
+                dai,
+                balance
+            );
 
             // Swap some more
             await router.swapExactTokensForTokens(
@@ -504,9 +531,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
-
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Asking for a small amount of the pool
             const amountToSwap = parseUnits(1000, 18);
@@ -570,9 +606,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
-
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Asking for half of the pool
             const amountToSwap = parseUnits(500, 18);
@@ -639,15 +684,16 @@ contract("VaderRouter", (accounts) => {
             const amountOutMin = parseUnits(10, 18);
 
             // Swap tokens
-            await assertErrors(router.swapExactTokensForTokens(
-                amountToSwap,
-                amountOutMin,
-                [mockUsdv.address, dai.address],
-                accounts.account2,
-                timestampAhead
-            ), "BasePool::swap: Unfavourable Trade");
-
-           
+            await assertErrors(
+                router.swapExactTokensForTokens(
+                    amountToSwap,
+                    amountOutMin,
+                    [mockUsdv.address, dai.address],
+                    accounts.account2,
+                    timestampAhead
+                ),
+                "BasePool::swap: Unfavourable Trade"
+            );
         });
 
         it("should add liquidity from many accounts and swap from other and evaluate the state", async () => {
@@ -680,16 +726,46 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve for account0
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Mint some tokens and approve for account1
-            await mintAndApprove(accounts.account1, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account1, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account1,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account1,
+                router.address,
+                dai,
+                balance
+            );
 
             // Mint some tokens and approve for account2
-            await mintAndApprove(accounts.account2, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account2, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account2,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account2,
+                router.address,
+                dai,
+                balance
+            );
 
             // Asking for half of the pool
             const amountToSwap = parseUnits(500, 18);
@@ -809,8 +885,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve for account0
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Provide big liquidity
             const liquidity0 = parseUnits(1000000, 18);
@@ -832,24 +918,23 @@ contract("VaderRouter", (accounts) => {
                 nativeAssetAdress,
                 dai.address,
             ]);
-    
+
             let amountOut = await router.calculateOutGivenIn(amountIn, [
                 nativeAssetAdress,
                 dai.address,
             ]);
-            
 
             // Swap tokens E-> V
             amountIn = await router.calculateInGivenOut(amount, [
                 dai.address,
                 nativeAssetAdress,
             ]);
-            
+
             amountOut = await router.calculateOutGivenIn(amountIn, [
                 dai.address,
                 nativeAssetAdress,
             ]);
-           
+
             amountOut = await router.calculateOutGivenIn(amount.mul(big(2)), [
                 dai.address,
                 nativeAssetAdress,
@@ -886,8 +971,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve for account0
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Provide big liquidity
             const liquidity0 = parseUnits(1000000, 18);
@@ -1059,8 +1154,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve for account0
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Provide small liquidity
             const liquidity0 = parseUnits(1000, 18);
@@ -1124,8 +1229,18 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve for account0
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Provide big liquidity
             const liquidity0 = parseUnits(1000000, 18);
@@ -1189,20 +1304,50 @@ contract("VaderRouter", (accounts) => {
             const balance = parseUnits(5000000, 18);
 
             // Mint some tokens and approve for account0
-            await mintAndApprove(accounts.account0, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account0, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account0,
+                router.address,
+                dai,
+                balance
+            );
 
             // Mint some tokens and approve for account1
-            await mintAndApprove(accounts.account1, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account1, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account1,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account1,
+                router.address,
+                dai,
+                balance
+            );
 
             // Mint some tokens and approve for account2
-            await mintAndApprove(accounts.account2, router.address, mockUsdv, balance);
-            await mintAndApprove(accounts.account2, router.address, dai, balance);
+            await mintAndApprove(
+                accounts.account2,
+                router.address,
+                mockUsdv,
+                balance
+            );
+            await mintAndApprove(
+                accounts.account2,
+                router.address,
+                dai,
+                balance
+            );
 
             // Asking for half of the pool
             const amountOut = parseUnits(500, 18);
-            
+
             const amountInMax = parseUnits(600, 18);
 
             const liquidity0 = parseUnits(10000, 18);
@@ -1239,7 +1384,10 @@ contract("VaderRouter", (accounts) => {
             );
 
             // Pre-calculate the amount that swap will cost us
-            const amountNeededForSwap = await router.calculateInGivenOut(amountOut, [nativeAssetAdress, dai.address]);
+            const amountNeededForSwap = await router.calculateInGivenOut(
+                amountOut,
+                [nativeAssetAdress, dai.address]
+            );
 
             // Swap tokens
             await router.swapTokensForExactTokens(
@@ -1283,10 +1431,12 @@ contract("VaderRouter", (accounts) => {
                 reserves.reserveForeign,
                 liquidity0.add(liquidity1.add(liquidity2)).sub(swapedAmount)
             );
-            
+
             assertBn(
                 reserves.reserveNative,
-                liquidity0.add(liquidity1.add(liquidity2)).add(amountNeededForSwap)
+                liquidity0
+                    .add(liquidity1.add(liquidity2))
+                    .add(amountNeededForSwap)
             );
         });
     });
