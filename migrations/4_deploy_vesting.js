@@ -15,7 +15,7 @@ module.exports = async function (deployer, network) {
         throw new Error("fix parameters for mainnet");
     }
 
-    const vesters = ["0x436b9C3A2E29bC2Df6ac1Ef5C5AC35b7b337A43d"];
+    const vesters = ["0x95693eB2857B3dcae39E000B0F7a5A40cB0B1Daf"];
     const amounts = [
         // 250,000,000
         new BN(250000000).mul(new BN(10).pow(new BN(18))),

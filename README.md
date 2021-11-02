@@ -27,15 +27,19 @@ npx truffle run verify MyContract --network kovan
 
 ### Kovan
 
--   Vether: [0x438f70Ab08AB3F74833c439643C3fC1939cE2929](https://kovan.etherscan.io/address/0x438f70Ab08AB3F74833c439643C3fC1939cE2929)
--   Vader: [0xE8bD273f54a990007b1069a15b66B584abc86e04](https://kovan.etherscan.io/address/0xE8bD273f54a990007b1069a15b66B584abc86e04)
--   Converter: [0xF79c9406c14AF5Aa8b3F1E5E538A026aDf4D0ff5](https://kovan.etherscan.io/address/0xF79c9406c14AF5Aa8b3F1E5E538A026aDf4D0ff5)
--   LinearVesting: [0xEa66FB7590147A5C901E14034f243e1cF8f958ff](https://kovan.etherscan.io/address/0xEa66FB7590147A5C901E14034f243e1cF8f958ff)
--   VaderMath: [0x0A23bde5E3930EfEaa546A4b4F10a1b7A9cC1e6C](https://kovan.etherscan.io/address/0x0A23bde5E3930EfEaa546A4b4F10a1b7A9cC1e6C)
--   VaderPoolV2: [0x795bE6b0BF54AF587385604B9DB869E797db69E0](https://kovan.etherscan.io/address/0x795bE6b0BF54AF587385604B9DB869E797db69E0)
--   VaderRouterV2: [0x80362414e23E64c404a8581779b28f037B8d5A05](https://kovan.etherscan.io/address/0x80362414e23E64c404a8581779b28f037B8d5A05)
--   VaderReserve: [0x176207eD5Ae8c41F766E8C31112c7cDdE5Fb32AA](https://kovan.etherscan.io/address/0x176207eD5Ae8c41F766E8C31112c7cDdE5Fb32AA)
--   USDV: [0xE90E0A75694Fc97576868243AD0364d10291f48A](https://kovan.etherscan.io/address/0xE90E0A75694Fc97576868243AD0364d10291f48A)
--   Vault (Mock): [0x85380a961CE380CdA8977E3A9D26bA91D9C379B1](https://kovan.etherscan.io/address/0x85380a961CE380CdA8977E3A9D26bA91D9C379B1)
--   GovernorAlpha: [0x34e9Db9bC8c668E2fa922c1d22913DCd587607D8](https://kovan.etherscan.io/address/0x34e9Db9bC8c668E2fa922c1d22913DCd587607D8)
--   Timelock: [0x7574D631E9b402917cC478ac568b465D7F726033](https://kovan.etherscan.io/address/0x7574D631E9b402917cC478ac568b465D7F726033)
+-   Vether: [0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303](https://kovan.etherscan.io/address/0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303s)
+-   Vader: [0x4ad25191285440992981B5B840F164b026bCE2A8](https://kovan.etherscan.io/address/0x4ad25191285440992981B5B840F164b026bCE2A8)
+-   Converter: [0x49CD0e2C632FBb9765520798a93272BeB44278bC](https://kovan.etherscan.io/address/0x49CD0e2C632FBb9765520798a93272BeB44278bC)
+-   LinearVesting: [0x54f208B5fF23F87c26d139Cbc410ECaA8d28360C](https://kovan.etherscan.io/address/0x54f208B5fF23F87c26d139Cbc410ECaA8d28360C)
+-   VaderReserve: [0xd3d6e14150530105ef7873D860BEc97F75a4F369](https://kovan.etherscan.io/address/0xd3d6e14150530105ef7873D860BEc97F75a4F369)
+-   USDV: [0xfd87ba583bd2071713fb5CB12086536a26eec18e](https://kovan.etherscan.io/address/0xfd87ba583bd2071713fb5CB12086536a26eec18e)
+
+-   VaderMath: [0x3a04c32a4146746D2c0AF48d9412277303e070Ea](https://kovan.etherscan.io/address/0x3a04c32a4146746D2c0AF48d9412277303e070Ea)
+-   VaderPoolV2: [0xf780120f249Cd518309a2315b73288B05Ff6Abc3](https://kovan.etherscan.io/address/0xf780120f249Cd518309a2315b73288B05Ff6Abc3)
+-   VaderRouterV2: [0x784634B1c7136575D93Ce66Da3A14a9352015063](https://kovan.etherscan.io/address/0x784634B1c7136575D93Ce66Da3A14a9352015063)
+-   SynthFactory: [0xfdD944fa68C5a0D08D814E58a72a685BcA59105F](https://kovan.etherscan.io/address/0xfdD944fa68C5a0D08D814E58a72a685BcA59105F()
+-   LPWrapper: [0x27Fa1AE61Ab123491Bd29013F4481bB7B0f6c4D8](https://kovan.etherscan.io/address/0x27Fa1AE61Ab123491Bd29013F4481bB7B0f6c4D8)
+
+-   Vault (Mock): [0xA677a539A170eBC9fd6E6011b726d68099E55EA9](https://kovan.etherscan.io/address/0xA677a539A170eBC9fd6E6011b726d68099E55EA9)
+-   Timelock: [0x02e3157Df831C3454d008901ddBB108C301E378a](https://kovan.etherscan.io/address/0x02e3157Df831C3454d008901ddBB108C301E378a)
+-   GovernorAlpha: [0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e](https://kovan.etherscan.io/address/0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e)

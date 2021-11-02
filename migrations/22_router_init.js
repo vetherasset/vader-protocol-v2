@@ -1,4 +1,3 @@
-const Vader = artifacts.require("Vader");
 const VaderRouterV2 = artifacts.require("VaderRouterV2");
 const VaderReserve = artifacts.require("VaderReserve");
 
@@ -7,15 +6,16 @@ module.exports = async function (deployer, network, accounts) {
     if (network == "development") {
         return
     }
-    const vader = await Vader.deployed();
     const router = await VaderRouterV2.deployed();
+    const reserve = await VaderReserve.deployed();
 
     if (network !== "kovan") {
         throw new Error("fix parameters for mainnet");
     }
 
-    // switch to DAO after all contracts are deployed
-    const dao = accounts[0];
+    const tx = await router.initialize(
+        reserve.address,
+    );
 
-    await deployer.deploy(VaderReserve, vader.address, router.address, dao);
+    console.log(tx);
 };

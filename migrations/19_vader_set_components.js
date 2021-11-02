@@ -2,6 +2,8 @@ const Vader = artifacts.require("Vader");
 const Converter = artifacts.require("Converter");
 const LinearVesting = artifacts.require("LinearVesting");
 const USDV = artifacts.require("USDV");
+// TODO: use GovernorAlpha for DAO
+const GovernorAlpha = artifacts.require("GovernorAlpha");
 
 module.exports = async function (deployer, network, accounts) {
     // skip development
