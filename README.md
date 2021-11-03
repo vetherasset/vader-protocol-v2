@@ -43,3 +43,5 @@ npx truffle run verify MyContract --network kovan
 -   Vault (Mock): [0xA677a539A170eBC9fd6E6011b726d68099E55EA9](https://kovan.etherscan.io/address/0xA677a539A170eBC9fd6E6011b726d68099E55EA9)
 -   Timelock: [0x02e3157Df831C3454d008901ddBB108C301E378a](https://kovan.etherscan.io/address/0x02e3157Df831C3454d008901ddBB108C301E378a)
 -   GovernorAlpha: [0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e](https://kovan.etherscan.io/address/0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e)
+
+-   XVader (fake Vader): [0x42980De4BF7926448ec75812955eB2762F067c30](https://kovan.etherscan.io/address/0x42980De4BF7926448ec75812955eB2762F067c30)
