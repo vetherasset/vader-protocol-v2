@@ -37,7 +37,7 @@ npx truffle run verify MyContract --network kovan
 -   VaderMath: [0x3a04c32a4146746D2c0AF48d9412277303e070Ea](https://kovan.etherscan.io/address/0x3a04c32a4146746D2c0AF48d9412277303e070Ea)
 -   VaderPoolV2: [0xf780120f249Cd518309a2315b73288B05Ff6Abc3](https://kovan.etherscan.io/address/0xf780120f249Cd518309a2315b73288B05Ff6Abc3)
 -   VaderRouterV2: [0x784634B1c7136575D93Ce66Da3A14a9352015063](https://kovan.etherscan.io/address/0x784634B1c7136575D93Ce66Da3A14a9352015063)
--   SynthFactory: [0xfdD944fa68C5a0D08D814E58a72a685BcA59105F](https://kovan.etherscan.io/address/0xfdD944fa68C5a0D08D814E58a72a685BcA59105F()
+-   SynthFactory: [0xfdD944fa68C5a0D08D814E58a72a685BcA59105F](https://kovan.etherscan.io/address/0xfdD944fa68C5a0D08D814E58a72a685BcA59105F)
 -   LPWrapper: [0x27Fa1AE61Ab123491Bd29013F4481bB7B0f6c4D8](https://kovan.etherscan.io/address/0x27Fa1AE61Ab123491Bd29013F4481bB7B0f6c4D8)
 
 -   Vault (Mock): [0xA677a539A170eBC9fd6E6011b726d68099E55EA9](https://kovan.etherscan.io/address/0xA677a539A170eBC9fd6E6011b726d68099E55EA9)
