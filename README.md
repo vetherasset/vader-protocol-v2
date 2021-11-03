@@ -27,7 +27,7 @@ npx truffle run verify MyContract --network kovan
 
 ### Kovan
 
--   Vether: [0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303](https://kovan.etherscan.io/address/0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303s)
+-   Vether: [0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303](https://kovan.etherscan.io/address/0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303)
 -   Vader: [0x4ad25191285440992981B5B840F164b026bCE2A8](https://kovan.etherscan.io/address/0x4ad25191285440992981B5B840F164b026bCE2A8)
 -   Converter: [0x49CD0e2C632FBb9765520798a93272BeB44278bC](https://kovan.etherscan.io/address/0x49CD0e2C632FBb9765520798a93272BeB44278bC)
 -   LinearVesting: [0x54f208B5fF23F87c26d139Cbc410ECaA8d28360C](https://kovan.etherscan.io/address/0x54f208B5fF23F87c26d139Cbc410ECaA8d28360C)
