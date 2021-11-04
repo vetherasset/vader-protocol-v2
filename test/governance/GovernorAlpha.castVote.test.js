@@ -11,7 +11,7 @@ const {
     big,
     parseUnits,
     rpc,
-} = require('../utils')(artifacts);
+} = require("../utils")(artifacts);
 
 const {
     prepareTargetsAndData,
@@ -19,7 +19,7 @@ const {
     decodeSignature,
     proposalFee,
     description,
-} = require('./helpers')({
+} = require("./helpers")({
     artifacts,
     parseUnits,
     big,
@@ -27,20 +27,14 @@ const {
 
 const proposalId = big(1);
 
-contract('GovernorAlpha.castVote', (accounts) => {
+contract("GovernorAlpha.castVote", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const {
-            governorAlpha,
-            timelock,
-            mockUsdv,
-            mockVault,
-        } = await deployMock(accounts);
+        const { governorAlpha, timelock, mockUsdv, mockVault } =
+            await deployMock(accounts);
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
             deploy: true,
         });
@@ -48,38 +42,33 @@ contract('GovernorAlpha.castVote', (accounts) => {
         await mockUsdv.mint(accounts.account0, proposalFee);
         await mockUsdv.approve(governorAlpha.address, proposalFee);
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         this.governorAlpha = governorAlpha;
         this.mockVault = mockVault;
     });
 
-    it('fails when proposal is pending', async function () {
+    it("fails when proposal is pending", async function () {
         await assertErrors(
             this.governorAlpha.castVote(proposalId, true),
-            'GovernorAlpha::_castVote: voting is closed',
+            "GovernorAlpha::_castVote: voting is closed"
         );
     });
 
-    it('fails when voter has already casted vote', async function () {
+    it("fails when voter has already casted vote", async function () {
         await this.governorAlpha.castVote(proposalId, true);
 
         await assertErrors(
             this.governorAlpha.castVote(proposalId, true),
-            'GovernorAlpha::_castVote: voter already voted',
+            "GovernorAlpha::_castVote: voter already voted"
         );
     });
 
@@ -88,13 +77,9 @@ contract('GovernorAlpha.castVote', (accounts) => {
         const support = true;
 
         assertEvents(
-            await this.governorAlpha.castVote(
-                proposalId,
-                support,
-                {
-                    from: accounts.voter,
-                },
-            ),
+            await this.governorAlpha.castVote(proposalId, support, {
+                from: accounts.voter,
+            }),
             {
                 VoteCast: {
                     voter: accounts.voter,
@@ -102,16 +87,18 @@ contract('GovernorAlpha.castVote', (accounts) => {
                     support,
                     votes,
                 },
-            },
+            }
         );
 
         assert.equal(
-            (await this.governorAlpha.getReceipt(proposalId, accounts.voter))[0],
-            true,
+            (
+                await this.governorAlpha.getReceipt(proposalId, accounts.voter)
+            )[0],
+            true
         );
     });
 
-    describe('vote by signature', () => {
+    describe("vote by signature", () => {
         before(async function () {
             this.voter = accounts.account1;
             const typedData = getTypedDataForVoteBySignature({
@@ -120,47 +107,30 @@ contract('GovernorAlpha.castVote', (accounts) => {
             });
 
             const result = await rpc({
-                method: 'eth_signTypedData',
+                method: "eth_signTypedData",
                 params: [this.voter, typedData],
                 from: this.voter,
             });
 
-            [
-                this.v,
-                this.r,
-                this.s,
-            ] = Object.values(decodeSignature(result.result));
+            [this.v, this.r, this.s] = Object.values(
+                decodeSignature(result.result)
+            );
 
-            [
-                this.id,
-                this.support,
-            ] = Object.values(typedData.message);
+            [this.id, this.support] = Object.values(typedData.message);
 
-            this.votes = await this.mockVault.getPriorVotes(accounts.account1, 0);
+            this.votes = await this.mockVault.getPriorVotes(
+                accounts.account1,
+                0
+            );
         });
 
-        it('should successfully cast vote', async function () {
-            const {
-                id,
-                support,
-                v,
-                r,
-                s,
-                voter,
-                votes,
-            } = this;
+        it("should successfully cast vote", async function () {
+            const { id, support, v, r, s, voter, votes } = this;
 
             assertEvents(
-                await this.governorAlpha.castVoteBySig(
-                    id,
-                    support,
-                    v,
-                    r,
-                    s,
-                    {
-                        from: voter,
-                    },
-                ),
+                await this.governorAlpha.castVoteBySig(id, support, v, r, s, {
+                    from: voter,
+                }),
                 {
                     VoteCast: {
                         voter,
@@ -168,32 +138,18 @@ contract('GovernorAlpha.castVote', (accounts) => {
                         support,
                         votes,
                     },
-                },
+                }
             );
         });
 
-        it('fails to replay signature of vote casting', async function () {
-            const {
-                id,
-                support,
-                v,
-                r,
-                s,
-                voter,
-            } = this;
+        it("fails to replay signature of vote casting", async function () {
+            const { id, support, v, r, s, voter } = this;
 
             await assertErrors(
-                this.governorAlpha.castVoteBySig(
-                    id,
-                    support,
-                    v,
-                    r,
-                    s,
-                    {
-                        from: voter,
-                    },
-                ),
-                'GovernorAlpha::_castVote: voter already voted',
+                this.governorAlpha.castVoteBySig(id, support, v, r, s, {
+                    from: voter,
+                }),
+                "GovernorAlpha::_castVote: voter already voted"
             );
         });
     });

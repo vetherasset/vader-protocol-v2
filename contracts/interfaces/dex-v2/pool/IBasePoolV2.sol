@@ -30,6 +30,14 @@ interface IBasePoolV2 {
 
     /* ========== FUNCTIONS ========== */
 
+    function getReserves(
+        IERC20 foreignAsset
+    ) external view returns (
+        uint112 reserve0,
+        uint112 reserve1,
+        uint32 blockTimestampLast
+    );
+
     function nativeAsset() external view returns (IERC20);
 
     function supported(IERC20 token) external view returns (bool);

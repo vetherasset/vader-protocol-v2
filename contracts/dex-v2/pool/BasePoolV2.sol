@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "../../shared/ProtocolConstants.sol";
+
 import "../../dex/math/VaderMath.sol";
 import "../../dex/utils/GasThrottle.sol";
 
@@ -36,7 +38,13 @@ import "../../interfaces/dex-v2/pool/IBasePoolV2.sol";
  * Keeps track of the cumulative prices for both native and foreign assets for
  * pairs and updates them after minting and burning of liquidity, and swapping of assets.
  **/
-contract BasePoolV2 is IBasePoolV2, GasThrottle, ERC721, ReentrancyGuard {
+contract BasePoolV2 is
+    IBasePoolV2,
+    ProtocolConstants,
+    GasThrottle,
+    ERC721,
+    ReentrancyGuard
+{
     /* ========== LIBRARIES ========== */
 
     // Used for safe token transfers
@@ -84,6 +92,10 @@ contract BasePoolV2 is IBasePoolV2, GasThrottle, ERC721, ReentrancyGuard {
      * @dev Initializes the contract by setting address of native asset.
      **/
     constructor(IERC20 _nativeAsset) ERC721("Vader LP", "VLP") {
+        require(
+            _nativeAsset != IERC20(_ZERO_ADDRESS),
+            "BasePoolV2::constructor: Incorrect Arguments"
+        );
         nativeAsset = IERC20(_nativeAsset);
     }
 

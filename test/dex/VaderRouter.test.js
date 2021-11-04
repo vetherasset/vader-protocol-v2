@@ -95,6 +95,7 @@ contract("VaderRouter", (accounts) => {
             const { router } = await deployMock(accounts);
             const latestBlock = await web3.eth.getBlock("latest");
             const timestampNow = latestBlock.timestamp;
+
             await assertErrors(
                 router.swapExactTokensForTokens(
                     TEN_UNITS,

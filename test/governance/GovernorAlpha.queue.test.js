@@ -1,4 +1,4 @@
-const { time } = require('@openzeppelin/test-helpers');
+const { time } = require("@openzeppelin/test-helpers");
 
 const {
     // Deployment Function
@@ -13,14 +13,14 @@ const {
     verboseAccounts,
     big,
     parseUnits,
-} = require('../utils')(artifacts);
+} = require("../utils")(artifacts);
 
 const {
     prepareTargetsAndData,
     advanceBlockToVotingPeriodEnd,
     proposalFee,
     description,
-} = require('./helpers')({
+} = require("./helpers")({
     artifacts,
     parseUnits,
     big,
@@ -28,19 +28,15 @@ const {
 
 const proposalId = big(1);
 
-contract('GovernorAlpha.queue', (accounts) => {
+contract("GovernorAlpha.queue", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const {
-            governorAlpha,
-            timelock,
-            mockUsdv,
-        } = await deployMock(accounts);
+        const { governorAlpha, timelock, mockUsdv } = await deployMock(
+            accounts
+        );
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
             deploy: true,
         });
@@ -48,43 +44,30 @@ contract('GovernorAlpha.queue', (accounts) => {
         await mockUsdv.mint(accounts.account0, proposalFee);
         await mockUsdv.approve(governorAlpha.address, proposalFee);
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         await time.advanceBlockTo(
-            (await web3.eth.getBlock('latest'))
-                .number + 1,
+            (await web3.eth.getBlock("latest")).number + 1
         );
 
-        await governorAlpha.castVote(
-            proposalId,
-            true,
-        );
+        await governorAlpha.castVote(proposalId, true);
 
         this.governorAlpha = governorAlpha;
         this.mockUsdv = mockUsdv;
     });
 
-    it('fails when for-votes are less than or equal to-against votes', async function () {
-        await this.governorAlpha.castVote(
-            proposalId,
-            false,
-            {
-                from: accounts.account1,
-            },
-        );
+    it("fails when for-votes are less than or equal to-against votes", async function () {
+        await this.governorAlpha.castVote(proposalId, false, {
+            from: accounts.account1,
+        });
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha: this.governorAlpha,
@@ -92,11 +75,11 @@ contract('GovernorAlpha.queue', (accounts) => {
 
         await assertErrors(
             this.governorAlpha.queue(proposalId),
-            'GovernorAlpha::queue: proposal can only be queued if it is succeeded',
+            "GovernorAlpha::queue: proposal can only be queued if it is succeeded"
         );
     });
 
-    it('fails when for-votes are less than quorum required', async function () {
+    it("fails when for-votes are less than quorum required", async function () {
         await this.mockUsdv.mint(accounts.account0, parseUnits(500000, 18));
 
         await advanceBlockToVotingPeriodEnd({
@@ -105,79 +88,60 @@ contract('GovernorAlpha.queue', (accounts) => {
 
         await assertErrors(
             this.governorAlpha.queue(proposalId),
-            'GovernorAlpha::queue: proposal can only be queued if it is succeeded',
+            "GovernorAlpha::queue: proposal can only be queued if it is succeeded"
         );
     });
 
-    it('should not queue a defeated proposal', async () => {
+    it("should not queue a defeated proposal", async () => {
         const proposalTwoId = big(2);
-        const {
-            governorAlpha,
-            timelock,
-            mockUsdv,
-        } = await deployMock();
+        const { governorAlpha, timelock, mockUsdv } = await deployMock();
         await governorAlpha.setTimelock(timelock.address);
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
         });
 
         await mockUsdv.mint(accounts.account0, proposalFee);
         await mockUsdv.approve(governorAlpha.address, proposalFee);
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         await time.advanceBlockTo(
-            (await web3.eth.getBlock('latest'))
-                .number + 1,
+            (await web3.eth.getBlock("latest")).number + 1
         );
 
-        await governorAlpha.castVote(
-            proposalTwoId,
-            false,
-        );
+        await governorAlpha.castVote(proposalTwoId, false);
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha,
         });
 
         assertBn(
-            (await governorAlpha.state(proposalTwoId)),
-            big(artifacts.require('GovernorAlpha').ProposalState.Defeated),
+            await governorAlpha.state(proposalTwoId),
+            big(artifacts.require("GovernorAlpha").ProposalState.Defeated)
         );
 
         await assertErrors(
             governorAlpha.queue(proposalTwoId),
-            'GovernorAlpha::queue: proposal can only be queued if it is succeeded',
+            "GovernorAlpha::queue: proposal can only be queued if it is succeeded"
         );
     });
 
-    it('test an expired proposal after it is queued', async () => {
-        const {
-            governorAlpha,
-            timelock,
-            mockUsdv,
-        } = await deployMock(accounts);
+    it("test an expired proposal after it is queued", async () => {
+        const { governorAlpha, timelock, mockUsdv } = await deployMock(
+            accounts
+        );
         await governorAlpha.setTimelock(timelock.address);
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
             deploy: true,
         });
@@ -185,30 +149,21 @@ contract('GovernorAlpha.queue', (accounts) => {
         await mockUsdv.mint(accounts.account0, proposalFee);
         await mockUsdv.approve(governorAlpha.address, proposalFee);
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         await time.advanceBlockTo(
-            (await web3.eth.getBlock('latest'))
-                .number + 1,
+            (await web3.eth.getBlock("latest")).number + 1
         );
 
-        await governorAlpha.castVote(
-            proposalId,
-            true,
-        );
+        await governorAlpha.castVote(proposalId, true);
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha,
@@ -221,24 +176,20 @@ contract('GovernorAlpha.queue', (accounts) => {
         await time.increaseTo(eta.add(gracePeriod));
 
         assert.equal(
-            (await governorAlpha.state(proposalId)),
-            artifacts.require('GovernorAlpha').ProposalState.Expired,
+            await governorAlpha.state(proposalId),
+            artifacts.require("GovernorAlpha").ProposalState.Expired
         );
     });
 
-    describe('queue proposal', () => {
+    describe("queue proposal", () => {
         before(async function () {
-            const {
-                governorAlpha,
-                timelock,
-                mockUsdv,
-            } = await deployMock(accounts);
+            const { governorAlpha, timelock, mockUsdv } = await deployMock(
+                accounts
+            );
 
             await governorAlpha.setTimelock(timelock.address);
 
-            const {
-                targetsData,
-            } = await prepareTargetsAndData({
+            const { targetsData } = await prepareTargetsAndData({
                 timelock,
                 deploy: true,
             });
@@ -246,30 +197,22 @@ contract('GovernorAlpha.queue', (accounts) => {
             await mockUsdv.mint(accounts.account0, proposalFee);
             await mockUsdv.approve(governorAlpha.address, proposalFee);
 
-            const {
-                signatures,
-                targetAddresses,
-                values,
-                calldatas,
-            } = targetsData;
+            const { signatures, targetAddresses, values, calldatas } =
+                targetsData;
 
             await governorAlpha.propose(
                 targetAddresses,
                 values,
                 signatures,
                 calldatas,
-                description,
+                description
             );
 
             await time.advanceBlockTo(
-                (await web3.eth.getBlock('latest'))
-                    .number + 1,
+                (await web3.eth.getBlock("latest")).number + 1
             );
 
-            await governorAlpha.castVote(
-                proposalId,
-                true,
-            );
+            await governorAlpha.castVote(proposalId, true);
             await advanceBlockToVotingPeriodEnd({
                 governorAlpha,
             });
@@ -281,22 +224,20 @@ contract('GovernorAlpha.queue', (accounts) => {
         it("and should assert eta and ProposalQueued event's data", async function () {
             const delay = await this.timelock.delay();
 
-            assertEvents(
-                await this.governorAlpha.queue(proposalId),
-                {
-                    ProposalQueued: {
-                        eta: big((await web3.eth.getBlock('latest')).timestamp)
-                            .add(delay),
-                        id: proposalId,
-                    },
+            assertEvents(await this.governorAlpha.queue(proposalId), {
+                ProposalQueued: {
+                    eta: big((await web3.eth.getBlock("latest")).timestamp).add(
+                        delay
+                    ),
+                    id: proposalId,
                 },
-            );
+            });
         });
 
-        it('and fails when the same proposal is tried to be queued the second time', async function () {
+        it("and fails when the same proposal is tried to be queued the second time", async function () {
             await assertErrors(
                 this.governorAlpha.queue(proposalId),
-                'GovernorAlpha::queue: proposal can only be queued if it is succeeded',
+                "GovernorAlpha::queue: proposal can only be queued if it is succeeded"
             );
         });
     });

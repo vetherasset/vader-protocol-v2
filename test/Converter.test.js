@@ -48,13 +48,8 @@ contract("Converter", (accounts) => {
 
     describe("initialization", () => {
         it("should properly initialize the converter by having Vader mint the corresponding amount of tokens to it", async () => {
-            const {
-                vader,
-                vesting,
-                converter,
-                usdv,
-                ADMINISTRATOR,
-            } = await deployMock();
+            const { vader, vesting, converter, usdv, ADMINISTRATOR } =
+                await deployMock();
 
             const { VETH_ALLOCATION } = PROJECT_CONSTANTS;
 
@@ -96,11 +91,8 @@ contract("Converter", (accounts) => {
         it("should properly support one-way conversion from Vader to Vether", async () => {
             const { converter, vether, vader } = await deployMock();
 
-            const {
-                VADER_VETHER_CONVERSION_RATE,
-                VETH_ALLOCATION,
-                BURN,
-            } = PROJECT_CONSTANTS;
+            const { VADER_VETHER_CONVERSION_RATE, VETH_ALLOCATION, BURN } =
+                PROJECT_CONSTANTS;
 
             await vether.approve(converter.address, TEN_UNITS, {
                 from: accounts.account0,

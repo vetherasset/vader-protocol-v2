@@ -53,6 +53,20 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
     }
 
     /* ========== VIEWS ========== */
+    
+    function cumulativePrices(IERC20 foreignAsset)
+        public
+        view
+        returns(
+            uint256 price0CumulativeLast,
+            uint256 price1CumulativeLast,
+            uint32 blockTimestampLast
+    ) {
+        PriceCumulative memory priceCumulative = pairInfo[foreignAsset].priceCumulative;
+        price0CumulativeLast = priceCumulative.nativeLast;
+        price1CumulativeLast = priceCumulative.foreignLast;
+        blockTimestampLast = pairInfo[foreignAsset].blockTimestampLast;
+    }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 

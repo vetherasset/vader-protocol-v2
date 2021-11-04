@@ -1,4 +1,4 @@
-const { time } = require('@openzeppelin/test-helpers');
+const { time } = require("@openzeppelin/test-helpers");
 const {
     // Deployment Function
     deployMock,
@@ -11,46 +11,36 @@ const {
     verboseAccounts,
     big,
     parseUnits,
-} = require('../utils')(artifacts);
+} = require("../utils")(artifacts);
 
 const {
     prepareTargetsAndData,
     advanceBlockToVotingPeriodEnd,
     proposalFee,
     description,
-} = require('./helpers')({
+} = require("./helpers")({
     artifacts,
     parseUnits,
     big,
 });
 
-contract('GovernorAlpha.veto', (accounts) => {
+contract("GovernorAlpha.veto", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const {
-            governorAlpha,
-            timelock,
-            mockUsdv,
-        } = await deployMock(accounts);
+        const { governorAlpha, timelock, mockUsdv } = await deployMock(
+            accounts
+        );
         await governorAlpha.setTimelock(timelock.address);
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
             deploy: true,
         });
 
-        await mockUsdv.mint(
-            accounts.account0,
-            proposalFee.mul(big(4)),
-        );
+        await mockUsdv.mint(accounts.account0, proposalFee.mul(big(4)));
 
-        await mockUsdv.approve(
-            governorAlpha.address,
-            proposalFee.mul(big(4)),
-        );
+        await mockUsdv.approve(governorAlpha.address, proposalFee.mul(big(4)));
 
         this.governorAlpha = governorAlpha;
         this.targetsData = targetsData;
@@ -63,59 +53,43 @@ contract('GovernorAlpha.veto', (accounts) => {
         this.count += 1;
     });
 
-    it('non-council should not be able to veto proposal', async function () {
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = this.targetsData;
+    it("non-council should not be able to veto proposal", async function () {
+        const { signatures, targetAddresses, values, calldatas } =
+            this.targetsData;
 
         await this.governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         await assertErrors(
-            this.governorAlpha.veto(
-                1,
-                true,
-                {
-                    from: accounts.account1,
-                },
-            ),
-            'only council can call',
+            this.governorAlpha.veto(1, true, {
+                from: accounts.account1,
+            }),
+            "only council can call"
         );
     });
 
-    it('fails to veto proposal when it is succeeded', async function () {
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = this.targetsData;
+    it("fails to veto proposal when it is succeeded", async function () {
+        const { signatures, targetAddresses, values, calldatas } =
+            this.targetsData;
 
         await this.governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         await time.advanceBlockTo(
-            (await web3.eth.getBlock('latest'))
-                .number + 1,
+            (await web3.eth.getBlock("latest")).number + 1
         );
 
-        await this.governorAlpha.castVote(
-            2,
-            true,
-        );
+        await this.governorAlpha.castVote(2, true);
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha: this.governorAlpha,
@@ -123,17 +97,13 @@ contract('GovernorAlpha.veto', (accounts) => {
 
         await assertErrors(
             this.governorAlpha.veto(2, true),
-            'Proposal can only be vetoed when active',
+            "Proposal can only be vetoed when active"
         );
     });
 
-    it('fails to veto a proposal having action for Governance contract itself', async function () {
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = this.targetsData;
+    it("fails to veto a proposal having action for Governance contract itself", async function () {
+        const { signatures, targetAddresses, values, calldatas } =
+            this.targetsData;
 
         const _targetAddresses = [
             ...targetAddresses,
@@ -146,7 +116,7 @@ contract('GovernorAlpha.veto', (accounts) => {
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         await advanceBlockToVotingPeriodEnd({
@@ -155,37 +125,30 @@ contract('GovernorAlpha.veto', (accounts) => {
 
         await assertErrors(
             this.governorAlpha.veto(3, true),
-            'council cannot veto on proposal having action with address(this) as target',
+            "council cannot veto on proposal having action with address(this) as target"
         );
     });
 
     it("successfully vetoes a proposal and asserts ProposalVetoed's data", async function () {
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = this.targetsData;
+        const { signatures, targetAddresses, values, calldatas } =
+            this.targetsData;
 
         await this.governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         const proposalId = 4;
         const support = true;
 
-        assertEvents(
-            await this.governorAlpha.veto(proposalId, support),
-            {
-                ProposalVetoed: {
-                    proposalId,
-                    support,
-                },
+        assertEvents(await this.governorAlpha.veto(proposalId, support), {
+            ProposalVetoed: {
+                proposalId,
+                support,
             },
-        );
+        });
     });
 });

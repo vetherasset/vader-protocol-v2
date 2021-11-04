@@ -138,13 +138,8 @@ contract("LinearVesting", (accounts) => {
         });
 
         it("should properly initialize the linear vesting by having Vader mint the corresponding amount of tokens to it and starting it via begin", async () => {
-            const {
-                vader,
-                vesting,
-                converter,
-                usdv,
-                ADMINISTRATOR,
-            } = await deployMock();
+            const { vader, vesting, converter, usdv, ADMINISTRATOR } =
+                await deployMock();
 
             const { TEAM_ALLOCATION, VESTING_DURATION } = PROJECT_CONSTANTS;
 

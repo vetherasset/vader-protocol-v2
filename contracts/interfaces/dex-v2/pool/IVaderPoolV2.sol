@@ -11,6 +11,14 @@ interface IVaderPoolV2 is IBasePoolV2, IERC721 {
     /* ========== STRUCTS ========== */
     /* ========== FUNCTIONS ========== */
 
+    function cumulativePrices(
+        IERC20 foreignAsset
+    ) external view returns (
+        uint256 price0CumulativeLast,
+        uint256 price1CumulativeLast,
+        uint32 blockTimestampLast
+    );
+
     function mintSynth(
         IERC20 foreignAsset,
         uint256 nativeDeposit,

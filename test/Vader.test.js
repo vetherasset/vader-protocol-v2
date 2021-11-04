@@ -78,13 +78,8 @@ contract("Vader", (accounts) => {
 
     describe("component setup", () => {
         it("should disallow setting the components of Vader incorrectly", async () => {
-            const {
-                vader,
-                vesting,
-                converter,
-                usdv,
-                ADMINISTRATOR,
-            } = await deployMock();
+            const { vader, vesting, converter, usdv, ADMINISTRATOR } =
+                await deployMock();
 
             await assertErrors(
                 vader.setComponents(
@@ -143,13 +138,8 @@ contract("Vader", (accounts) => {
         });
 
         it("should allow the components to be set properly by the contract owner", async () => {
-            const {
-                vader,
-                vesting,
-                converter,
-                usdv,
-                ADMINISTRATOR,
-            } = await deployMock();
+            const { vader, vesting, converter, usdv, ADMINISTRATOR } =
+                await deployMock();
 
             assertEvents(
                 await vader.setComponents(
@@ -185,13 +175,8 @@ contract("Vader", (accounts) => {
         });
 
         it("should disallow re-setting the components by the new owner (dao)", async () => {
-            const {
-                vader,
-                vesting,
-                converter,
-                usdv,
-                FAKE_DAO,
-            } = await deployMock();
+            const { vader, vesting, converter, usdv, FAKE_DAO } =
+                await deployMock();
 
             await assertErrors(
                 vader.setComponents(
@@ -235,14 +220,8 @@ contract("Vader", (accounts) => {
         });
 
         it("should allow grants to be claimed by the DAO without a transaction fee", async () => {
-            const {
-                vader,
-                vesting,
-                converter,
-                usdv,
-                ADMINISTRATOR,
-                FAKE_DAO,
-            } = await deployMock();
+            const { vader, vesting, converter, usdv, ADMINISTRATOR, FAKE_DAO } =
+                await deployMock();
 
             const { ECOSYSTEM_GROWTH } = PROJECT_CONSTANTS;
 
@@ -449,10 +428,8 @@ contract("Vader", (accounts) => {
         it("should properly apply a transaction fee to transactions based on how close to the maximum supply the token is", async () => {
             const { vader } = await deployMock();
 
-            const {
-                MAX_FEE_BASIS_POINTS,
-                MAX_BASIS_POINTS,
-            } = PROJECT_CONSTANTS;
+            const { MAX_FEE_BASIS_POINTS, MAX_BASIS_POINTS } =
+                PROJECT_CONSTANTS;
 
             // NOTE: The previous test converged the total supply close to the maximum supply, meaning our fee is very close to 1% now
             const feeNearMax = await vader.calculateFee();

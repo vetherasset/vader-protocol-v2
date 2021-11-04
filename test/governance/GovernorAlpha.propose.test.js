@@ -11,40 +11,27 @@ const {
     verboseAccounts,
     big,
     parseUnits,
-} = require('../utils')(artifacts);
+} = require("../utils")(artifacts);
 
-const {
-    prepareTargetsAndData,
-    proposalFee,
-    description,
-} = require('./helpers')({
-    artifacts,
-    parseUnits,
-    big,
-});
+const { prepareTargetsAndData, proposalFee, description } =
+    require("./helpers")({
+        artifacts,
+        parseUnits,
+        big,
+    });
 
-contract('GovernorAlpha.propose', (accounts) => {
+contract("GovernorAlpha.propose", (accounts) => {
     it("fails when array arguments lengths' are mismatching", async () => {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const {
-            governorAlpha,
-            timelock,
-        } = await deployMock(accounts);
+        const { governorAlpha, timelock } = await deployMock(accounts);
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
             deploy: true,
         });
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await assertErrors(
             governorAlpha.propose(
@@ -52,16 +39,14 @@ contract('GovernorAlpha.propose', (accounts) => {
                 values,
                 signatures,
                 calldatas,
-                description,
+                description
             ),
-            'GovernorAlpha::propose: proposal function information arity mismatch',
+            "GovernorAlpha::propose: proposal function information arity mismatch"
         );
     });
 
     it("fails when array arguments lengths' are zero", async () => {
-        const {
-            governorAlpha,
-        } = await deployMock();
+        const { governorAlpha } = await deployMock();
 
         const emptyArray = [];
         await assertErrors(
@@ -70,36 +55,22 @@ contract('GovernorAlpha.propose', (accounts) => {
                 emptyArray,
                 emptyArray,
                 emptyArray,
-                description,
+                description
             ),
-            'GovernorAlpha::propose: must provide actions',
+            "GovernorAlpha::propose: must provide actions"
         );
     });
 
-    it('fails when proposer has not set allowance', async () => {
-        const {
-            governorAlpha,
-            mockUsdv,
-            timelock,
-        } = await deployMock();
+    it("fails when proposer has not set allowance", async () => {
+        const { governorAlpha, mockUsdv, timelock } = await deployMock();
 
-        await mockUsdv.mint(
-            accounts.account0,
-            proposalFee,
-        );
+        await mockUsdv.mint(accounts.account0, proposalFee);
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
         });
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await assertErrors(
             governorAlpha.propose(
@@ -107,39 +78,24 @@ contract('GovernorAlpha.propose', (accounts) => {
                 values,
                 signatures,
                 calldatas,
-                description,
+                description
             ),
-            'ERC20: transfer amount exceeds allowance',
+            "ERC20: transfer amount exceeds allowance"
         );
     });
 
-    it('fails when proposer does not have sufficient balance', async () => {
-        const {
-            governorAlpha,
-            mockUsdv,
-            timelock,
-        } = await deployMock();
+    it("fails when proposer does not have sufficient balance", async () => {
+        const { governorAlpha, mockUsdv, timelock } = await deployMock();
 
-        await mockUsdv.approve(
-            governorAlpha.address,
-            proposalFee,
-            {
-                from: accounts.account1,
-            },
-        );
+        await mockUsdv.approve(governorAlpha.address, proposalFee, {
+            from: accounts.account1,
+        });
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
         });
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await assertErrors(
             governorAlpha.propose(
@@ -150,48 +106,31 @@ contract('GovernorAlpha.propose', (accounts) => {
                 description,
                 {
                     from: accounts.account1,
-                },
+                }
             ),
-            'ERC20: transfer amount exceeds balance',
+            "ERC20: transfer amount exceeds balance"
         );
     });
 
-    it('fails when proposer already has a pending proposal', async () => {
-        const {
-            governorAlpha,
-            mockUsdv,
-            timelock,
-        } = await deployMock();
+    it("fails when proposer already has a pending proposal", async () => {
+        const { governorAlpha, mockUsdv, timelock } = await deployMock();
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
         });
 
-        await mockUsdv.mint(
-            accounts.account0,
-            proposalFee.mul(big(2)),
-        );
+        await mockUsdv.mint(accounts.account0, proposalFee.mul(big(2)));
 
-        await mockUsdv.approve(
-            governorAlpha.address,
-            proposalFee.mul(big(2)),
-        );
+        await mockUsdv.approve(governorAlpha.address, proposalFee.mul(big(2)));
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await governorAlpha.propose(
             targetAddresses,
             values,
             signatures,
             calldatas,
-            description,
+            description
         );
 
         await assertErrors(
@@ -200,30 +139,20 @@ contract('GovernorAlpha.propose', (accounts) => {
                 values,
                 signatures,
                 calldatas,
-                description,
+                description
             ),
-            'GovernorAlpha::propose: one live proposal per proposer, found an already pending proposal',
+            "GovernorAlpha::propose: one live proposal per proposer, found an already pending proposal"
         );
     });
 
-    it('fails when proposer has an already active proposal', async () => {
-        const {
-            governorAlpha,
-            timelock,
-        } = await deployMock();
+    it("fails when proposer has an already active proposal", async () => {
+        const { governorAlpha, timelock } = await deployMock();
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
         });
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await assertErrors(
             governorAlpha.propose(
@@ -231,35 +160,23 @@ contract('GovernorAlpha.propose', (accounts) => {
                 values,
                 signatures,
                 calldatas,
-                description,
+                description
             ),
-            'GovernorAlpha::propose: one live proposal per proposer, found an already active proposal',
+            "GovernorAlpha::propose: one live proposal per proposer, found an already active proposal"
         );
     });
 
-    it('fails when there are too many actions', async () => {
-        const {
-            governorAlpha,
-            timelock,
-        } = await deployMock();
+    it("fails when there are too many actions", async () => {
+        const { governorAlpha, timelock } = await deployMock();
         const maxActions = await governorAlpha.proposalMaxOperations();
 
-        const {
-            targetsData,
-        } = await prepareTargetsAndData({
+        const { targetsData } = await prepareTargetsAndData({
             timelock,
             deploy: true,
-            numberOfMocks: maxActions
-                .add(big(1))
-                .toNumber(),
+            numberOfMocks: maxActions.add(big(1)).toNumber(),
         });
 
-        const {
-            signatures,
-            targetAddresses,
-            values,
-            calldatas,
-        } = targetsData;
+        const { signatures, targetAddresses, values, calldatas } = targetsData;
 
         await assertErrors(
             governorAlpha.propose(
@@ -267,36 +184,26 @@ contract('GovernorAlpha.propose', (accounts) => {
                 values,
                 signatures,
                 calldatas,
-                description,
+                description
             ),
-            'GovernorAlpha::propose: too many actions',
+            "GovernorAlpha::propose: too many actions"
         );
     });
 
-    describe('successfully propose and', () => {
+    describe("successfully propose and", () => {
         before(async function () {
-            const {
-                governorAlpha,
-                timelock,
-                mockUsdv,
-            } = await deployMock(accounts);
+            const { governorAlpha, timelock, mockUsdv } = await deployMock(
+                accounts
+            );
 
-            const {
-                targetsData,
-            } = await prepareTargetsAndData({
+            const { targetsData } = await prepareTargetsAndData({
                 timelock,
                 deploy: true,
             });
 
-            await mockUsdv.mint(
-                accounts.account0,
-                proposalFee,
-            );
+            await mockUsdv.mint(accounts.account0, proposalFee);
 
-            await mockUsdv.approve(
-                governorAlpha.address,
-                proposalFee,
-            );
+            await mockUsdv.approve(governorAlpha.address, proposalFee);
 
             this.governorAlpha = governorAlpha;
             this.targetsData = targetsData;
@@ -305,8 +212,8 @@ contract('GovernorAlpha.propose', (accounts) => {
             this.feeReceiver = accounts.account1;
 
             this.balancesBefore = {
-                [this.proposer]: (await mockUsdv.balanceOf(this.proposer)),
-                [this.feeReceiver]: (await mockUsdv.balanceOf(this.feeReceiver)),
+                [this.proposer]: await mockUsdv.balanceOf(this.proposer),
+                [this.feeReceiver]: await mockUsdv.balanceOf(this.feeReceiver),
             };
 
             this.amountsChanged = {
@@ -316,18 +223,15 @@ contract('GovernorAlpha.propose', (accounts) => {
         });
 
         it("assert the ProposalCreated event's data", async function () {
-            const {
-                signatures,
-                targetAddresses,
-                values,
-                calldatas,
-            } = this.targetsData;
+            const { signatures, targetAddresses, values, calldatas } =
+                this.targetsData;
 
-            const startBlockExpected = big((await web3.eth.getBlock('latest')).number + 1)
-                .add((await this.governorAlpha.votingDelay()));
+            const startBlockExpected = big(
+                (await web3.eth.getBlock("latest")).number + 1
+            ).add(await this.governorAlpha.votingDelay());
 
             const endBlockExpected = startBlockExpected.add(
-                (await this.governorAlpha.votingPeriod()),
+                await this.governorAlpha.votingPeriod()
             );
 
             assertEvents(
@@ -336,36 +240,34 @@ contract('GovernorAlpha.propose', (accounts) => {
                     values,
                     signatures,
                     calldatas,
-                    description,
-                ), {
+                    description
+                ),
+                {
                     ProposalCreated: {
                         proposer: accounts.account0,
                         startBlock: startBlockExpected,
                         endBlock: endBlockExpected,
                         id: big(1),
                     },
-                },
+                }
             );
         });
 
-        it('assert the balances transfer from propose call', async function () {
+        it("assert the balances transfer from propose call", async function () {
             const balancesAfter = {
-                [this.proposer]: (await this.mockUsdv.balanceOf(this.proposer)),
-                [this.feeReceiver]: (await this.mockUsdv.balanceOf(this.feeReceiver)),
+                [this.proposer]: await this.mockUsdv.balanceOf(this.proposer),
+                [this.feeReceiver]: await this.mockUsdv.balanceOf(
+                    this.feeReceiver
+                ),
             };
 
             Object.entries(this.balancesBefore).forEach(
-                ([
-                    account,
-                    balance,
-                ]) => {
+                ([account, balance]) => {
                     assertBn(
-                        balance.add(
-                            this.amountsChanged[account],
-                        ),
-                        balancesAfter[account],
+                        balance.add(this.amountsChanged[account]),
+                        balancesAfter[account]
                     );
-                },
+                }
             );
         });
 
@@ -379,17 +281,9 @@ contract('GovernorAlpha.propose', (accounts) => {
 
             const actions = await this.governorAlpha.getActions(1);
 
-            Object.entries(data).forEach(
-                ([
-                    key,
-                    value,
-                ]) => {
-                    assert.deepEqual(
-                        value,
-                        actions[key],
-                    );
-                },
-            );
+            Object.entries(data).forEach(([key, value]) => {
+                assert.deepEqual(value, actions[key]);
+            });
         });
     });
 });
