@@ -40,11 +40,11 @@ contract("SynthFactory", (accounts) => {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
 
-            const { synthFactory, dai, poolV2, lpWrapper } = await deployMock(
+            const { synthFactory, dai, poolV2, lpWrapper, routerV2 } = await deployMock(
                 accounts
             );
 
-            await poolV2.initialize(lpWrapper.address, synthFactory.address);
+            await poolV2.initialize(lpWrapper.address, synthFactory.address, routerV2.address);
 
             await assertErrors(
                 synthFactory.createSynth(await dai.address),

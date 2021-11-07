@@ -31,7 +31,7 @@ contract("GovernorAlpha.castVote", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const { governorAlpha, timelock, mockUsdv, mockVault } =
+        const { governorAlpha, timelock, mockXVader } =
             await deployMock(accounts);
 
         const { targetsData } = await prepareTargetsAndData({
@@ -39,8 +39,23 @@ contract("GovernorAlpha.castVote", (accounts) => {
             deploy: true,
         });
 
-        await mockUsdv.mint(accounts.account0, proposalFee);
-        await mockUsdv.approve(governorAlpha.address, proposalFee);
+        await mockXVader.mint(accounts.account0, proposalFee.mul(big(3)));
+        await mockXVader.approve(governorAlpha.address, proposalFee.mul(big(3)));
+
+        await mockXVader.mint(accounts.voter, parseUnits(1000, 18));
+        await mockXVader.delegate(accounts.voter, {
+            from: accounts.voter
+        });
+
+        await mockXVader.mint(accounts.account3, parseUnits(1000, 18));
+        await mockXVader.delegate(accounts.account3, {
+            from: accounts.account3
+        });
+
+        await mockXVader.mint(accounts.account4, parseUnits(1000, 18));
+        await mockXVader.delegate(accounts.account4, {
+            from: accounts.account4
+        });
 
         const { signatures, targetAddresses, values, calldatas } = targetsData;
 
@@ -53,7 +68,7 @@ contract("GovernorAlpha.castVote", (accounts) => {
         );
 
         this.governorAlpha = governorAlpha;
-        this.mockVault = mockVault;
+        this.mockXVader = mockXVader;
     });
 
     it("fails when proposal is pending", async function () {
@@ -64,25 +79,30 @@ contract("GovernorAlpha.castVote", (accounts) => {
     });
 
     it("fails when voter has already casted vote", async function () {
-        await this.governorAlpha.castVote(proposalId, true);
+        await this.governorAlpha.castVote(proposalId, true, {
+            from: accounts.voter
+        });
 
         await assertErrors(
-            this.governorAlpha.castVote(proposalId, true),
+            this.governorAlpha.castVote(proposalId, true, {
+                from: accounts.voter
+            }),
             "GovernorAlpha::_castVote: voter already voted"
         );
     });
 
     it("should cast vote and assert the VoteCast event's data", async function () {
-        const votes = await this.mockVault.getPriorVotes(accounts.voter, 0);
+        const startBlock = (await this.governorAlpha.proposals(proposalId)).startBlock;
+        const votes = await this.mockXVader.getPastVotes(accounts.account3, startBlock);
         const support = true;
 
         assertEvents(
             await this.governorAlpha.castVote(proposalId, support, {
-                from: accounts.voter,
+                from: accounts.account3,
             }),
             {
                 VoteCast: {
-                    voter: accounts.voter,
+                    voter: accounts.account3,
                     proposalId,
                     support,
                     votes,
@@ -92,7 +112,7 @@ contract("GovernorAlpha.castVote", (accounts) => {
 
         assert.equal(
             (
-                await this.governorAlpha.getReceipt(proposalId, accounts.voter)
+                await this.governorAlpha.getReceipt(proposalId, accounts.account3)
             )[0],
             true
         );
@@ -100,7 +120,7 @@ contract("GovernorAlpha.castVote", (accounts) => {
 
     describe("vote by signature", () => {
         before(async function () {
-            this.voter = accounts.account1;
+            this.voter = accounts.account4;
             const typedData = getTypedDataForVoteBySignature({
                 verifyingContract: this.governorAlpha.address,
                 chainId: (await this.governorAlpha.CHAINID()).toNumber(),
@@ -118,10 +138,8 @@ contract("GovernorAlpha.castVote", (accounts) => {
 
             [this.id, this.support] = Object.values(typedData.message);
 
-            this.votes = await this.mockVault.getPriorVotes(
-                accounts.account1,
-                0
-            );
+            const startBlock = (await this.governorAlpha.proposals(proposalId)).startBlock;
+            this.votes = await this.mockXVader.getPastVotes(this.voter, startBlock)
         });
 
         it("should successfully cast vote", async function () {

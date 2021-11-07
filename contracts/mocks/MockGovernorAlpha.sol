@@ -6,17 +6,15 @@ import "../governance/GovernorAlpha.sol";
 
 contract MockGovernorAlpha is GovernorAlpha {
     constructor(
-        address vault_,
         address guardian_,
-        address USDV_,
+        address xVader_,
         address feeReceiver_,
         uint256 feeAmount_,
         address council_
     )
         GovernorAlpha(
-            vault_,
             guardian_,
-            USDV_,
+            xVader_,
             feeReceiver_,
             feeAmount_,
             council_

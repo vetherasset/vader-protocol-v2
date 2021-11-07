@@ -53,16 +53,23 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
     }
 
     /* ========== VIEWS ========== */
-    
+
+    /*
+     * @dev Returns cumulative prices and the timestamp the were last updated
+     * for both native and foreign assets against the pair specified by
+     * parameter {foreignAsset}.
+     **/
     function cumulativePrices(IERC20 foreignAsset)
         public
         view
-        returns(
+        returns (
             uint256 price0CumulativeLast,
             uint256 price1CumulativeLast,
             uint32 blockTimestampLast
-    ) {
-        PriceCumulative memory priceCumulative = pairInfo[foreignAsset].priceCumulative;
+        )
+    {
+        PriceCumulative memory priceCumulative = pairInfo[foreignAsset]
+            .priceCumulative;
         price0CumulativeLast = priceCumulative.nativeLast;
         price1CumulativeLast = priceCumulative.foreignLast;
         blockTimestampLast = pairInfo[foreignAsset].blockTimestampLast;
@@ -70,10 +77,20 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function initialize(ILPWrapper _wrapper, ISynthFactory _synthFactory)
-        external
-        onlyOwner
-    {
+    /*
+     * @dev Initializes contract's state with LP wrapper, synth factory
+     * and router addresses.
+     *
+     * Requirements:
+     * - None of the parameters are zero addresses.
+     * - The parameters are not already set.
+     * - Only callable by contract owner.
+     **/
+    function initialize(
+        ILPWrapper _wrapper,
+        ISynthFactory _synthFactory,
+        address _router
+    ) external onlyOwner {
         require(
             wrapper == ILPWrapper(_ZERO_ADDRESS),
             "VaderPoolV2::initialize: Already initialized"
@@ -86,10 +103,26 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
             _synthFactory != ISynthFactory(_ZERO_ADDRESS),
             "VaderPoolV2::initialize: Incorrect SynthFactory Specified"
         );
+        require(
+            _router != _ZERO_ADDRESS,
+            "VaderPoolV2::initialize: Incorrect Router Specified"
+        );
         wrapper = _wrapper;
         synthFactory = _synthFactory;
+        router = _router;
     }
 
+    /*
+     * @dev Allows minting of synthetic assets corresponding to the {foreignAsset} based
+     * on the native asset amount deposited and returns the minted synth asset amount.
+     *
+     * Creates the synthetic asset against {foreignAsset} if it does not already exist.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Requirements:
+     * - {foreignAsset} must be a supported token.
+     **/
     function mintSynth(
         IERC20 foreignAsset,
         uint256 nativeDeposit,
@@ -133,6 +166,16 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         synth.mint(to, amountSynth);
     }
 
+    /*
+     * @dev Allows burning of synthetic assets corresponding to the {foreignAsset}
+     * and returns the redeemed amount of native asset.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Requirements:
+     * - {foreignAsset} must have a valid synthetic asset against it.
+     * - {synthAmount} must be greater than zero.
+     **/
     function burnSynth(
         IERC20 foreignAsset,
         uint256 synthAmount,
@@ -186,11 +229,15 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      *
      * Returns the amounts for native and foreign assets sent to the {to} address
      * along with the covered loss.
+     *
+     * Requirements:
+     * - Can only be called by the Router.
      **/
     // NOTE: IL is only covered via router!
     function burn(uint256 id, address to)
         external
         override
+        onlyRouter
         returns (
             uint256 amountNative,
             uint256 amountForeign,
@@ -221,6 +268,19 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
             _ONE_YEAR;
     }
 
+    /*
+     * @dev Allows minting of liquidity in fungible tokens. The fungible token
+     * is a wrapped LP token against a particular pair. The liquidity issued is also
+     * tracked within this contract along with liquidity issued against non-fungible
+     * token.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Calls 'mint' on the LP wrapper token contract.
+     *
+     * Requirements:
+     * - LP wrapper token must exist against {foreignAsset}.
+     **/
     function mintFungible(
         IERC20 foreignAsset,
         uint256 nativeDeposit,
@@ -244,8 +304,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
 
         PairInfo storage pair = pairInfo[foreignAsset];
         uint256 totalLiquidityUnits = pair.totalSupply;
-        if (totalLiquidityUnits == 0)
-            liquidity = nativeDeposit; // TODO: Contact ThorChain on proper approach
+        if (totalLiquidityUnits == 0) liquidity = nativeDeposit;
         else
             liquidity = VaderMath.calculateLiquidityUnits(
                 nativeDeposit,
@@ -275,6 +334,17 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         emit Mint(from, to, nativeDeposit, foreignDeposit);
     }
 
+    /*
+     * @dev Allows burning of liquidity issued in fungible tokens.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Calls 'burn' on the LP wrapper token contract.
+     *
+     * Requirements:
+     * - LP wrapper token must exist against {foreignAsset}.
+     * - {amountNative} and {amountForeign} redeemed, both must be greater than zero.,
+     **/
     function burnFungible(
         IERC20 foreignAsset,
         uint256 liquidity,

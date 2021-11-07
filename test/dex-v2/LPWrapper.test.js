@@ -41,11 +41,11 @@ contract("LPWrapper", (accounts) => {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
 
-            const { lpWrapper, dai, poolV2, synthFactory } = await deployMock(
+            const { lpWrapper, dai, poolV2, synthFactory, routerV2 } = await deployMock(
                 accounts
             );
 
-            await poolV2.initialize(lpWrapper.address, synthFactory.address);
+            await poolV2.initialize(lpWrapper.address, synthFactory.address, routerV2.address);
 
             await assertErrors(
                 lpWrapper.createWrapper(await dai.address),

@@ -7,8 +7,9 @@ module.exports = (artifacts) => {
     const MockToken = artifacts.require("MockToken");
     const MockConstants = artifacts.require("MockConstants");
     const GovernorAlpha = artifacts.require("MockGovernorAlpha");
-    const MockVault = artifacts.require("MockVault");
+    const MockXVader = artifacts.require("MockXVader");
     const Timelock = artifacts.require("MockTimelock");
+    const MockAggregatorV3 = artifacts.require("MockAggregatorV3");
 
     // Project Contracts
     const Vader = artifacts.require("Vader");
@@ -30,6 +31,8 @@ module.exports = (artifacts) => {
     const SynthFactory = artifacts.require("SynthFactory");
     const LPToken = artifacts.require("LPToken");
     const LPWrapper = artifacts.require("LPWrapper");
+    const TWAP = artifacts.require("TwapOracle");
+    const XVader = artifacts.require("XVader");
 
     // Libraries
 
@@ -191,15 +194,14 @@ module.exports = (artifacts) => {
             ADMINISTRATOR,
         ],
         Converter: (_, { vader, vether }) => [vether.address, vader.address],
-        GovernorAlpha: ({ account0, account1 }, { mockVault, mockUsdv }) => [
-            mockVault.address,
+        GovernorAlpha: ({ account0, account1 }, { mockXVader }) => [
             account0,
-            mockUsdv.address,
+            mockXVader.address,
             account1,
             parseUnits(1000, 18),
             account0,
         ],
-        MockVault: () => [],
+        MockXVader: (_, { vader }) => [vader.address],
         Timelock: (_, { governorAlpha }) => [
             governorAlpha.address,
             big(10 * 60), // default delay of 10 minutes
@@ -208,6 +210,8 @@ module.exports = (artifacts) => {
         VaderRouterV2: (_, { poolV2 }) => [poolV2.address],
         LPWrapper: (_, { poolV2 }) => [poolV2.address],
         SynthFactory: (_, { poolV2 }) => [poolV2.address],
+        TWAP: (_, { poolV2 }) => [poolV2.address, big(1200 * 60)],
+        XVader: (_, { vader }) => [vader.address],
     };
 
     // Project Utilities
@@ -310,8 +314,8 @@ module.exports = (artifacts) => {
             ...configs.Converter(accounts, cached)
         );
 
-        cached.mockVault = await MockVault.new(
-            ...configs.MockVault(accounts, cached)
+        cached.mockXVader = await MockXVader.new(
+            ...configs.MockXVader(accounts, cached)
         );
 
         cached.governorAlpha = await GovernorAlpha.new(
@@ -334,6 +338,10 @@ module.exports = (artifacts) => {
         cached.synthFactory = await SynthFactory.new(
             ...configs.SynthFactory(accounts, cached)
         );
+
+        cached.twap = await TWAP.new(...configs.TWAP(accounts, cached));
+
+        cached.xVader = await XVader.new(...configs.XVader(accounts, cached));
 
         return cached;
     };
@@ -381,6 +389,7 @@ module.exports = (artifacts) => {
         BasePoolV2,
         Synth,
         LPToken,
+        MockAggregatorV3,
 
         // Project Specific Utilities
         advanceEpochs,

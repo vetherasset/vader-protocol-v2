@@ -30,7 +30,7 @@ contract("GovernorAlpha.execute", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const { governorAlpha, timelock, mockUsdv } = await deployMock(
+        const { governorAlpha, timelock, mockXVader } = await deployMock(
             accounts
         );
         await governorAlpha.setTimelock(timelock.address);
@@ -40,8 +40,13 @@ contract("GovernorAlpha.execute", (accounts) => {
             deploy: true,
         });
 
-        await mockUsdv.mint(accounts.account0, proposalFee);
-        await mockUsdv.approve(governorAlpha.address, proposalFee);
+        await mockXVader.mint(accounts.account0, proposalFee);
+        await mockXVader.approve(governorAlpha.address, proposalFee);
+
+        await mockXVader.mint(accounts.voter, parseUnits(1000, 18));
+        await mockXVader.delegate(accounts.voter, {
+            from: accounts.voter
+        });
 
         const { signatures, targetAddresses, values, calldatas } = targetsData;
 
@@ -57,14 +62,15 @@ contract("GovernorAlpha.execute", (accounts) => {
             (await web3.eth.getBlock("latest")).number + 1
         );
 
-        await governorAlpha.castVote(proposalId, true);
+        await governorAlpha.castVote(proposalId, true, {
+            from: accounts.voter,
+        });
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha,
         });
 
         this.governorAlpha = governorAlpha;
-        this.mockUsdv = mockUsdv;
     });
 
     it("should not execute proposal when not in queue", async function () {

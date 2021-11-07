@@ -28,39 +28,64 @@ contract("VaderPool V2", (accounts) => {
         it("should should not allow to construct the singleton pool with bad arguments", async () => {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
-            const { poolV2, lpWrapper, synthFactory } = await deployMock(
+            const { poolV2, lpWrapper, synthFactory, routerV2 } = await deployMock(
                 accounts
             );
 
             await assertErrors(
-                poolV2.initialize(UNSET_ADDRESS, synthFactory.address),
+                poolV2.initialize(UNSET_ADDRESS, synthFactory.address, routerV2.address),
                 "VaderPoolV2::initialize: Incorrect Wrapper Specified"
             );
 
             await assertErrors(
-                poolV2.initialize(lpWrapper.address, UNSET_ADDRESS),
+                poolV2.initialize(lpWrapper.address, UNSET_ADDRESS, routerV2.address),
                 "VaderPoolV2::initialize: Incorrect SynthFactory Specified"
+            );
+
+            await assertErrors(
+                poolV2.initialize(lpWrapper.address, synthFactory.address, UNSET_ADDRESS),
+                "VaderPoolV2::initialize: Incorrect Router Specified"
             );
         });
 
         it("should construct the singleton pool and check the state", async () => {
-            const { poolV2, mockUsdv, lpWrapper, synthFactory } =
+            const { poolV2, mockUsdv, lpWrapper, synthFactory, routerV2 } =
                 await deployMock();
 
-            await poolV2.initialize(lpWrapper.address, synthFactory.address);
+            await poolV2.initialize(lpWrapper.address, synthFactory.address, routerV2.address);
 
             assert.equal(await poolV2.queueActive(), true);
             assert.equal(await poolV2.nativeAsset(), await mockUsdv.address);
             assert.equal(await poolV2.wrapper(), lpWrapper.address);
             assert.equal(await poolV2.synthFactory(), synthFactory.address);
+            assert.equal(await poolV2.router(), routerV2.address);
+        });
+    });
+
+    describe("should fail when called by non router address", () => {
+        it("VaderPoolV2::burn", async () => {
+            if (Array.isArray(accounts))
+                accounts = await verboseAccounts(accounts);
+
+            const { poolV2 } = await deployMock(accounts);
+            const mockAddress = accounts.account5;
+
+            await assertErrors(
+                poolV2.burn(
+                    0,
+                    mockAddress
+                ),
+                "BasePoolV2::_onlyRouter: Only Router is allowed to call"
+            )
         });
     });
 
     describe("set support token", () => {
         it("should not allow to add support for a asset if already supported", async () => {
-            const { poolV2, dai, token, mockUsdv, erc20Dec8 } =
+            const { poolV2, dai, token, mockUsdv, erc20Dec8, lpWrapper, synthFactory, routerV2 } =
                 await deployMock();
 
+            await poolV2.initialize(lpWrapper.address, synthFactory.address, routerV2.address);
             // Set support for the tokens
             await poolV2.setTokenSupport(dai.address, true);
             await poolV2.setTokenSupport(token.address, true);

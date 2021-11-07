@@ -2,18 +2,17 @@
 pragma solidity =0.8.9;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/governance/ITimelock.sol";
+import "../interfaces/x-vader/IXVader.sol";
 
 /**
  * @dev Implementation of {GovernorAlpha} contract.
  *
  * The GovernorAlpha contract allows creation of proposals by anyone
- * by depositing USDV (1000 USDV initially).
+ * by depositing xVader (1000 xVader initially).
  *
- * Anyone can vote on the created proposals utilizing their USDV weight in
- * Vault (Vader governance vault) contract.
+ * Anyone can vote on the created proposals utilizing their xVader weight in
+ * xVader contract.
  *
  * Only 1 proposal can be active at a time by a particular proposer.
  *
@@ -27,16 +26,11 @@ import "../interfaces/governance/ITimelock.sol";
  * and a proposal vetoed with success is also queued at the same time.
  */
 contract GovernorAlpha {
-    using SafeERC20 for IERC20;
-
     // The name of this contract
     string public constant name = "Vader Governor Alpha";
 
     // The address of the Vader Protocol Timelock
     ITimelock public timelock;
-
-    // The address of the Vader governance vault
-    IVault public immutable vault; // TODO: to be replaced with interface of Vault contract
 
     // The address of the Governor Guardian
     address public guardian;
@@ -44,8 +38,8 @@ contract GovernorAlpha {
     // The total number of proposals
     uint256 public proposalCount;
 
-    // address of USD vader token
-    IERC20 public immutable USDV; // TODO: to be replaced with interface of USDV contract
+    // address of xVader token
+    IXVader public immutable xVader;
 
     // address of fee receiver
     address public feeReceiver;
@@ -86,8 +80,8 @@ contract GovernorAlpha {
         bytes[] calldatas;
         uint256 startBlock;
         uint256 endBlock;
-        uint256 forVotes;
-        uint256 againstVotes;
+        uint224 forVotes;
+        uint224 againstVotes;
         VetoStatus vetoStatus;
         mapping(address => Receipt) receipts;
     }
@@ -103,7 +97,7 @@ contract GovernorAlpha {
     struct Receipt {
         bool hasVoted;
         bool support;
-        uint96 votes;
+        uint224 votes;
     }
 
     /**
@@ -190,23 +184,22 @@ contract GovernorAlpha {
     /* ========== CONSTRUCTOR ========== */
 
     /**
-     * @dev Initializes the contract's state setting USDV, vault, fee receiver,
+     * @dev Initializes the contract's state setting xVader, fee receiver,
      * council and guardian addresses along with the fee amount.
      *
      * It performs sanity checks for the address type parameters against zero
      * address values.
      */
     constructor(
-        address vault_,
         address guardian_,
-        address USDV_,
+        address xVader_,
         address feeReceiver_,
         uint256 feeAmount_,
         address council_
     ) {
         require(
-            vault_ != address(0) && USDV_ != address(0),
-            "GovernorAlpha::constructor: Vader or USDV address is zero"
+            xVader_ != address(0),
+            "GovernorAlpha::constructor: xVader address is zero"
         );
 
         require(
@@ -216,9 +209,8 @@ contract GovernorAlpha {
             "GovernorAlpha::constructor: guardian, feeReceiver or council cannot be zero"
         );
 
-        vault = IVault(vault_);
         guardian = guardian_;
-        USDV = IERC20(USDV_);
+        xVader = IXVader(xVader_);
         feeReceiver = feeReceiver_;
         feeAmount = feeAmount_;
         council = council_;
@@ -229,10 +221,9 @@ contract GovernorAlpha {
 
     /* ========== VIEWS ========== */
 
-    // TODO: Adjust quorum based on a more stable reference point than total supply
     // The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
-    function quorumVotes() public view returns (uint256) {
-        return (USDV.totalSupply() * 4) / 100; // 4% of USDV
+    function quorumVotes(uint256 blockNumber) public view returns (uint256) {
+        return (xVader.getPastTotalSupply(blockNumber) * 4) / 100; // 4% of xVader's supply at the time of proposal creation.
     }
 
     // The maximum number of actions that can be included in a proposal
@@ -313,7 +304,7 @@ contract GovernorAlpha {
 
             if (
                 proposal.forVotes <= proposal.againstVotes ||
-                proposal.forVotes < quorumVotes()
+                proposal.forVotes < quorumVotes(proposal.startBlock)
             ) return ProposalState.Defeated;
 
             if (proposal.eta == 0) return ProposalState.Succeeded;
@@ -347,14 +338,14 @@ contract GovernorAlpha {
     }
 
     /**
-     * @dev Allows any to make a proposal by depositing {feeAmount} USDV.
+     * @dev Allows any to make a proposal by depositing {feeAmount} xVader.
      * It accepts targets along with the values, signature and calldatas
      * for the actions to perform if the proposal succeeds.
      *
      * Requirements:
      * - targets, values, signatures and calldatas arrays' lengths must be greater
      *   than zero, less than {proposalMaxOperations} and are the same.
-     * - the caller must approve {feeAmount} USDV to this contract prior to call.
+     * - the caller must approve {feeAmount} xVader to this contract prior to call.
      * - the caller must not have an active/pending proposal.
      */
     function propose(
@@ -379,7 +370,7 @@ contract GovernorAlpha {
             "GovernorAlpha::propose: too many actions"
         );
 
-        USDV.safeTransferFrom(msg.sender, feeReceiver, feeAmount);
+        xVader.transferFrom(msg.sender, feeReceiver, feeAmount);
 
         uint256 latestProposalId = latestProposalIds[msg.sender];
         if (latestProposalId != 0) {
@@ -725,7 +716,7 @@ contract GovernorAlpha {
 
     /**
      * @dev Casts vote against proposal with id {proposalId}.
-     * It gets the voting weight of voter from {Vault} contract corresponding to
+     * It gets the voting weight of voter from {xVader} token contract corresponding to
      * the blocknumber when proposal started and adds those votes to either
      * {forVotes} or {againstVotes} property of {Proposal} depending upon if
      * the voter is voting in favor of or against the proposal.
@@ -752,7 +743,9 @@ contract GovernorAlpha {
             "GovernorAlpha::_castVote: voter already voted"
         );
 
-        uint96 votes = vault.getPriorVotes(voter, proposal.startBlock);
+        // optimistically casting to uint224 as xVader contract performs the checks for
+        // votes to not overflow uint224.
+        uint224 votes = uint224(xVader.getPastVotes(voter, proposal.startBlock));
 
         if (support) {
             proposal.forVotes = proposal.forVotes + votes;
@@ -825,12 +818,4 @@ contract GovernorAlpha {
         _onlyCouncil();
         _;
     }
-}
-
-// TODO: temporary implementation to be replaced with IVault
-interface IVault {
-    function getPriorVotes(address account, uint256 blockNumber)
-        external
-        view
-        returns (uint96);
 }

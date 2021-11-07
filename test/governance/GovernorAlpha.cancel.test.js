@@ -30,7 +30,7 @@ contract("GovernorAlpha.cancel", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const { governorAlpha, timelock, mockUsdv } = await deployMock(
+        const { governorAlpha, timelock, mockXVader } = await deployMock(
             accounts
         );
         await governorAlpha.setTimelock(timelock.address);
@@ -40,18 +40,18 @@ contract("GovernorAlpha.cancel", (accounts) => {
             deploy: true,
         });
 
-        await mockUsdv.mint(accounts.account0, proposalFee.mul(big(4)));
+        await mockXVader.mint(accounts.account0, proposalFee.mul(big(4)));
 
-        await mockUsdv.approve(governorAlpha.address, proposalFee.mul(big(4)));
+        await mockXVader.approve(governorAlpha.address, proposalFee.mul(big(4)));
 
         this.governorAlpha = governorAlpha;
         this.targetsData = targetsData;
-        this.mockUsdv = mockUsdv;
+        this.mockXVader = mockXVader;
     });
 
     it("should not cancel proposal by non guardian", async function () {
-        await this.mockUsdv.mint(accounts.account1, proposalFee);
-        await this.mockUsdv.approve(this.governorAlpha.address, proposalFee, {
+        await this.mockXVader.mint(accounts.account1, proposalFee);
+        await this.mockXVader.approve(this.governorAlpha.address, proposalFee, {
             from: accounts.account1,
         });
 
@@ -121,10 +121,15 @@ contract("GovernorAlpha.cancel", (accounts) => {
         });
     });
 
-    it("should successully cancel proposal when it is queued", async function () {
+    it("should successfully cancel proposal when it is queued", async function () {
         const proposalFourId = big(4);
         const { signatures, targetAddresses, values, calldatas } =
             this.targetsData;
+
+        await this.mockXVader.mint(accounts.voter, parseUnits(1000, 18));
+        await this.mockXVader.delegate(accounts.voter, {
+            from: accounts.voter
+        });
 
         await this.governorAlpha.propose(
             targetAddresses,
@@ -138,7 +143,9 @@ contract("GovernorAlpha.cancel", (accounts) => {
             (await web3.eth.getBlock("latest")).number + 1
         );
 
-        await this.governorAlpha.castVote(proposalFourId, true);
+        await this.governorAlpha.castVote(proposalFourId, true, {
+            from: accounts.voter
+        });
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha: this.governorAlpha,
@@ -170,7 +177,9 @@ contract("GovernorAlpha.cancel", (accounts) => {
             (await web3.eth.getBlock("latest")).number + 1
         );
 
-        await this.governorAlpha.castVote(proposalFiveId, true);
+        await this.governorAlpha.castVote(proposalFiveId, true, {
+            from: accounts.voter
+        });
 
         await advanceBlockToVotingPeriodEnd({
             governorAlpha: this.governorAlpha,

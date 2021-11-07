@@ -82,9 +82,8 @@ contract BasePoolV2 is
     // A unique id the of the position created when liquidity is added to a pool.
     uint256 public positionId;
 
-    // uint112 private _reserveNative; // uses single storage slot, accessible via getReserves
-    // uint112 private _reserveForeign; // uses single storage slot, accessible via getReserves
-    // uint32 private _blockTimestampLast; // uses single storage slot, accessible via getReserves
+    // Address of the router contract (used for restriction)
+    address public router;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -164,6 +163,7 @@ contract BasePoolV2 is
      * - Amounts of native and foreign must be approved to the pool prior to calling the `mint` function.
      * - The amount of {liquidity} to be minted must be greater than 0.
      * - The param {foreignAsset} must be a supported token.
+     * - Can only be called by Router.
      **/
     function mint(
         IERC20 foreignAsset,
@@ -175,6 +175,7 @@ contract BasePoolV2 is
         external
         override
         nonReentrant
+        onlyRouter
         supportedToken(foreignAsset)
         returns (uint256 liquidity)
     {
@@ -187,8 +188,7 @@ contract BasePoolV2 is
 
         PairInfo storage pair = pairInfo[foreignAsset];
         uint256 totalLiquidityUnits = pair.totalSupply;
-        if (totalLiquidityUnits == 0)
-            liquidity = nativeDeposit; // TODO: Contact ThorChain on proper approach
+        if (totalLiquidityUnits == 0) liquidity = nativeDeposit;
         else
             liquidity = VaderMath.calculateLiquidityUnits(
                 nativeDeposit,
@@ -310,6 +310,7 @@ contract BasePoolV2 is
      * - The foreign amount received from second swap must be greater than 0 and the reserve for foreign asset in the pair/pool
      *   against that particular foreign asset.
      * - The params {foreignAssetA} and {foreignAssetB} must be the supported tokens.
+     * - Can only be called by Router.
      **/
     function doubleSwap(
         IERC20 foreignAssetA,
@@ -319,6 +320,7 @@ contract BasePoolV2 is
     )
         external
         override
+        onlyRouter
         supportedToken(foreignAssetA)
         supportedToken(foreignAssetB)
         nonReentrant
@@ -419,6 +421,7 @@ contract BasePoolV2 is
      * - The destination asset's amount in the swap must be greater than 0 and not exceed destination
      *   asset's reserve.
      * - The param {foreignAsset} must be a supported token.
+     * - Can only be called by Router.
      **/
     function swap(
         IERC20 foreignAsset,
@@ -428,6 +431,7 @@ contract BasePoolV2 is
     )
         external
         override
+        onlyRouter
         supportedToken(foreignAsset)
         nonReentrant
         validateGas
@@ -575,10 +579,29 @@ contract BasePoolV2 is
         );
     }
 
+    /*
+     * @dev Private function that returns if {msg.sender} is a Router or not.
+     **/
+    function _onlyRouter() private view {
+        require(
+            msg.sender == router,
+            "BasePoolV2::_onlyRouter: Only Router is allowed to call"
+        );
+    }
+
     /* ========== MODIFIERS ========== */
 
     /*
-     * @dev Modifier that only allows continuation of exection if the param
+     * @dev Modifier that only allows continuation of execution
+     * if {msg.sender} is Router.
+     **/
+    modifier onlyRouter() {
+        _onlyRouter();
+        _;
+    }
+
+    /*
+     * @dev Modifier that only allows continuation of exectuion if the param
      * {token} is a supported token.
      **/
     modifier supportedToken(IERC20 token) {

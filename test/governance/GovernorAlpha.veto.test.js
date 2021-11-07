@@ -28,7 +28,7 @@ contract("GovernorAlpha.veto", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const { governorAlpha, timelock, mockUsdv } = await deployMock(
+        const { governorAlpha, timelock, mockXVader } = await deployMock(
             accounts
         );
         await governorAlpha.setTimelock(timelock.address);
@@ -38,13 +38,12 @@ contract("GovernorAlpha.veto", (accounts) => {
             deploy: true,
         });
 
-        await mockUsdv.mint(accounts.account0, proposalFee.mul(big(4)));
+        await mockXVader.mint(accounts.account0, proposalFee.mul(big(4)));
 
-        await mockUsdv.approve(governorAlpha.address, proposalFee.mul(big(4)));
+        await mockXVader.approve(governorAlpha.address, proposalFee.mul(big(4)));
 
         this.governorAlpha = governorAlpha;
         this.targetsData = targetsData;
-        this.mockUsdv = mockUsdv;
         this.count = 1;
     });
 

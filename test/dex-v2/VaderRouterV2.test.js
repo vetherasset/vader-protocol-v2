@@ -87,6 +87,9 @@ contract("VaderRouter V2", (accounts) => {
             await reserve.initialize(routerV2.address, accounts.dao);
             await routerV2.initialize(reserve.address);
 
+            const mockAccount = accounts.account5;
+            await poolV2.initialize(mockAccount, mockAccount, routerV2.address);
+
             // Set the supported tokens
             await poolV2.setTokenSupport(erc20Dec8.address, true);
             await poolV2.setTokenSupport(erc20Dec12.address, true);
@@ -256,6 +259,9 @@ contract("VaderRouter V2", (accounts) => {
             await reserve.initialize(routerV2.address, accounts.dao);
             await routerV2.initialize(reserve.address);
 
+            const mockAccount = accounts.account5;
+            await poolV2.initialize(mockAccount, mockAccount, routerV2.address);
+
             // Set the supported tokens
             await poolV2.setTokenSupport(erc20Dec8.address, true);
             await poolV2.setTokenSupport(erc20Dec12.address, true);
@@ -421,6 +427,8 @@ contract("VaderRouter V2", (accounts) => {
             const { poolV2, dai, token, routerV2, mockUsdv } = await deployMock(
                 accounts
             );
+            const mockAccount = accounts.account5;
+            await poolV2.initialize(mockAccount, mockAccount, routerV2.address);
 
             // Set the supported tokens
             await poolV2.setTokenSupport(dai.address, true);
@@ -819,6 +827,9 @@ contract("VaderRouter V2", (accounts) => {
             await reserve.initialize(routerV2.address, accounts.dao);
             await routerV2.initialize(reserve.address);
 
+            const mockAccount = accounts.account5;
+            await poolV2.initialize(mockAccount, mockAccount, routerV2.address);
+
             // Set the supported tokens
             await poolV2.setTokenSupport(dai.address, true);
             await poolV2.setTokenSupport(token.address, true);
@@ -927,6 +938,9 @@ contract("VaderRouter V2", (accounts) => {
 
             await reserve.initialize(routerV2.address, accounts.dao);
             await routerV2.initialize(reserve.address);
+
+            const mockAccount = accounts.account5;
+            await poolV2.initialize(mockAccount, mockAccount, routerV2.address);
 
             // Set the supported tokens
             await poolV2.setTokenSupport(dai.address, true);
@@ -1068,6 +1082,9 @@ contract("VaderRouter V2", (accounts) => {
 
             await reserve.initialize(routerV2.address, accounts.dao);
             await routerV2.initialize(reserve.address);
+
+            const mockAccount = accounts.account5;
+            await poolV2.initialize(mockAccount, mockAccount, routerV2.address);
 
             // Set the supported tokens
             await poolV2.setTokenSupport(dai.address, true);

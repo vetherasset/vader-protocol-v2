@@ -26,7 +26,7 @@ contract("GovernorAlpha state change tests", (accounts) => {
     before(async function () {
         if (Array.isArray(accounts)) accounts = await verboseAccounts(accounts);
 
-        const { governorAlpha, timelock, mockUsdv } = await deployMock(
+        const { governorAlpha, timelock, mockXVader } = await deployMock(
             accounts
         );
         await governorAlpha.setTimelock(timelock.address);
@@ -40,7 +40,7 @@ contract("GovernorAlpha state change tests", (accounts) => {
             big(12).mul(big(60))
         ); // eta is 12 minutes
         this.governorAlphaTwo = governorAlphaTwo;
-        this.mockUsdv = mockUsdv;
+        this.mockXVader = mockXVader;
     });
 
     describe("changeFeeReceiver", () => {
@@ -189,13 +189,18 @@ contract("GovernorAlpha state change tests", (accounts) => {
 
         it("time lock successfully changes council", async () => {
             const proposalId = big(1);
-            const { governorAlpha, timelock, mockUsdv } = await deployMock(
+            const { governorAlpha, timelock, mockXVader } = await deployMock(
                 accounts
             );
             await governorAlpha.setTimelock(timelock.address);
 
-            await mockUsdv.mint(accounts.account0, parseUnits(1000, 18));
-            await mockUsdv.approve(governorAlpha.address, parseUnits(1000, 18));
+            await mockXVader.mint(accounts.account0, parseUnits(1000, 18));
+            await mockXVader.approve(governorAlpha.address, parseUnits(1000, 18));
+
+            await mockXVader.mint(accounts.voter, parseUnits(1000, 18));
+            await mockXVader.delegate(accounts.voter, {
+                from: accounts.voter,
+            })
 
             const calldata = governorAlpha.contract.methods[
                 "changeCouncil(address)"
@@ -213,7 +218,9 @@ contract("GovernorAlpha state change tests", (accounts) => {
                 (await web3.eth.getBlock("latest")).number + 1
             );
 
-            await governorAlpha.castVote(proposalId, true);
+            await governorAlpha.castVote(proposalId, true, {
+                from: accounts.voter,
+            });
 
             await advanceBlockToVotingPeriodEnd({
                 governorAlpha,
