@@ -127,6 +127,9 @@ contract TwapOracle is Ownable {
                 //
 
                 sumNative += pairData.price1Average.mul(1).decode144(); // native asset amount
+                if (pairData.price1Average._x != 0) {
+                    require(sumNative != 0);
+                }
 
                 (
                     uint80 roundID,
@@ -149,7 +152,7 @@ contract TwapOracle is Ownable {
                 sumUSD += uint256(price) * (10**10);
             }
         }
-
+        require(sumNative != 0, "TwapOracle::consult: Sum of native is zero");
         result = ((sumUSD * IERC20Metadata(token).decimals()) / sumNative);
     }
 

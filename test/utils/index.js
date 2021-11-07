@@ -210,7 +210,7 @@ module.exports = (artifacts) => {
         VaderRouterV2: (_, { poolV2 }) => [poolV2.address],
         LPWrapper: (_, { poolV2 }) => [poolV2.address],
         SynthFactory: (_, { poolV2 }) => [poolV2.address],
-        TWAP: (_, { poolV2 }) => [poolV2.address, big(1200 * 60)],
+        TWAP: (_, { poolV2 }) => [poolV2.address, big(1)],
         XVader: (_, { vader }) => [vader.address],
     };
 

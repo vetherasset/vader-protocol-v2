@@ -1,3 +1,5 @@
+const { advanceBlock } = require("@openzeppelin/test-helpers/src/time");
+
 const {
     // Deployment Function
     deployMock,
@@ -94,11 +96,11 @@ contract.only("Twap Oracle", (accounts) => {
         });
     });
 
-    describe("consult", () => {
+    describe.only("consult", () => {
         it("should consult for usdv", async () => {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
-            const { twap, dai, mockUsdv, vader, factory, poolV2, routerV2 } =
+            const { twap, dai, mockUsdv, factory, poolV2, routerV2, token } =
                 await deployMock(accounts);
 
             const mockAccount = accounts.account5;
@@ -107,6 +109,7 @@ contract.only("Twap Oracle", (accounts) => {
             // Set the supported tokens
             await poolV2.setTokenSupport(dai.address, true);
             await poolV2.setTokenSupport(mockUsdv.address, true);
+            await poolV2.setTokenSupport(token.address, true);
 
             // Construct the deadline
             const latestBlock = await web3.eth.getBlock("latest");
@@ -128,10 +131,17 @@ contract.only("Twap Oracle", (accounts) => {
                 mockUsdv,
                 accountsAmount
             );
+            mintAndApprove(
+                accounts.account0,
+                routerV2.address,
+                token,
+                accountsAmount
+            );
 
             // Approve the pool also
             await mockUsdv.approve(poolV2.address, accountsAmount);
             await dai.approve(poolV2.address, accountsAmount);
+            await token.approve(poolV2.address, accountsAmount);
 
             const liquidity = parseUnits(10000, 18);
 
@@ -139,6 +149,16 @@ contract.only("Twap Oracle", (accounts) => {
             await routerV2.addLiquidity(
                 mockUsdv.address,
                 dai.address,
+                liquidity,
+                liquidity,
+                accounts.account0,
+                deadline
+            );
+
+            // Add liquidity
+            await routerV2.addLiquidity(
+                mockUsdv.address,
+                token.address,
                 liquidity,
                 liquidity,
                 accounts.account0,
@@ -160,7 +180,9 @@ contract.only("Twap Oracle", (accounts) => {
             );
 
             // Initialize the twap
-            await twap.initialize(mockUsdv.address, vader.address);
+            await twap.initialize(mockUsdv.address, token.address);
+
+            await twap.enableUSDV();
 
             // Register the pair
             await twap.registerPair(
@@ -169,9 +191,17 @@ contract.only("Twap Oracle", (accounts) => {
                 dai.address
             );
 
+            // Register the pair
+            await twap.registerPair(
+                factory.address,
+                mockUsdv.address,
+                token.address
+            );
+
             // Create mock aggregators
             const UsdvAggregator = await MockAggregatorV3.new(mockUsdv.address);
             const DaiAggregator = await MockAggregatorV3.new(dai.address);
+            const XVaderAggregator = await MockAggregatorV3.new(token.address);
 
             // Register the mock aggregators
             await twap.registerAggregator(
@@ -179,11 +209,43 @@ contract.only("Twap Oracle", (accounts) => {
                 UsdvAggregator.address
             );
             await twap.registerAggregator(dai.address, DaiAggregator.address);
+            await twap.registerAggregator(
+                token.address,
+                XVaderAggregator.address
+            );
 
-            await twap.getRate().then(console.log);
+            await advanceBlock();
+
+            // Swap Dai
+            await routerV2.swapExactTokensForTokens(
+                amountIn,
+                amountOutMin,
+                [mockUsdv.address, dai.address],
+                accounts.account2,
+                deadline
+            );
+
+            await routerV2.swapExactTokensForTokens(
+                amountIn,
+                amountOutMin,
+                [mockUsdv.address, token.address],
+                accounts.account2,
+                deadline
+            );
+
+            await advanceBlock();
+
+            // Update needs to be called at least one time
+            await twap.update();
 
             // Get consult for the usdv
-            await twap.consult(mockUsdv.address).then(console.log);
+            // await twap.consult(mockUsdv.address).then(console.log);
+
+            console.log(
+                "Consult   : ",
+                (await twap.consult(token.address)).toString()
+            );
+            console.log("Get rate : ", (await twap.getRate()).toString());
         });
     });
 

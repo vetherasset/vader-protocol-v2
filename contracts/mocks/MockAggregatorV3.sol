@@ -13,8 +13,8 @@ contract MockAggregatorV3 {
         token = _token;
     }
 
-    function decimals() external pure returns (string memory) {
-        return "18";
+    function decimals() external pure returns (uint8) {
+        return 8;
     }
 
     function version() external pure returns (uint256) {
@@ -34,7 +34,7 @@ contract MockAggregatorV3 {
     {
         // Mock Data
         roundId = _roundId;
-        answer = 1 ether;
+        answer = 1e8;
         startedAt = block.timestamp;
         updatedAt = block.timestamp;
         answeredInRound = roundId;
@@ -53,7 +53,7 @@ contract MockAggregatorV3 {
     {
         // Mock Data
         roundId = _storedRoundId + 1;
-        answer = 1 ether;
+        answer = 1e8;
         startedAt = block.timestamp;
         updatedAt = block.timestamp;
         answeredInRound = roundId;
