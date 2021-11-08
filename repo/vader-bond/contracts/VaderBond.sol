@@ -45,7 +45,7 @@ contract VaderBond is Ownable, ReentrancyGuard {
         uint vestingTerm; // in blocks
         uint minPrice; // vs principal value
         uint maxPayout; // in thousandths of a %. i.e. 500 = 0.5%
-        uint maxDebt; // payout token decimal debt ratio, max % total supply created as debt
+        uint maxDebt; // max debt, same decimals with payout token
     }
     // Info for bond holder
     struct Bond {
