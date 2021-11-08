@@ -367,15 +367,15 @@ contract VaderBond is Ownable, ReentrancyGuard {
     /**
      *  @notice calculate amount of payout token available for claim by depositor
      *  @param _depositor address
-     *  @return pendingPayout uint
+     *  @return uint
      */
-    function pendingPayoutFor(address _depositor) external view returns (uint pendingPayout) {
+    function pendingPayoutFor(address _depositor) external view returns (uint) {
         uint percentVested = percentVestedFor(_depositor);
         uint payout = bondInfo[_depositor].payout;
         if (percentVested >= MAX_PERCENT_VESTED) {
-            pendingPayout = payout;
+            return payout;
         } else {
-            pendingPayout = payout.mul(percentVested) / MAX_PERCENT_VESTED;
+            return payout.mul(percentVested) / MAX_PERCENT_VESTED;
         }
     }
 
