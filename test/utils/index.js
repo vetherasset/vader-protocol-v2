@@ -10,6 +10,7 @@ module.exports = (artifacts) => {
     const MockXVader = artifacts.require("MockXVader");
     const Timelock = artifacts.require("MockTimelock");
     const MockAggregatorV3 = artifacts.require("MockAggregatorV3");
+    const MockUniswapV2Library = artifacts.require("MockUniswapV2Library");
 
     // Project Contracts
     const Vader = artifacts.require("Vader");
@@ -20,7 +21,6 @@ module.exports = (artifacts) => {
     const USDV = artifacts.require("USDV");
     const Converter = artifacts.require("Converter");
     const LinearVesting = artifacts.require("LinearVesting");
-    const VaderMath = artifacts.require("VaderMath");
     const BasePool = artifacts.require("BasePool");
 
     // V2
@@ -33,8 +33,11 @@ module.exports = (artifacts) => {
     const LPWrapper = artifacts.require("LPWrapper");
     const TWAP = artifacts.require("TwapOracle");
     const XVader = artifacts.require("XVader");
+    const MockUniswapV2Factory = artifacts.require("MockUniswapV2Factory");
+    const UniswapV2Pair = artifacts.require("UniswapV2Pair");
 
     // Libraries
+    const VaderMath = artifacts.require("VaderMath");
 
     // Generic Utilities
 
@@ -212,6 +215,7 @@ module.exports = (artifacts) => {
         SynthFactory: (_, { poolV2 }) => [poolV2.address],
         TWAP: (_, { poolV2 }) => [poolV2.address, big(1)],
         XVader: (_, { vader }) => [vader.address],
+        MockUniswapV2Factory: ({ account0 }, _) => [account0],
     };
 
     // Project Utilities
@@ -289,6 +293,8 @@ module.exports = (artifacts) => {
         cached.erc20Dec12 = await MockToken.new("DEC12", "DEC12", 12);
         cached.maliciousToken = await MockToken.new("MALC", "MALC", 18);
 
+        cached.mockUniswapV2Library = await MockUniswapV2Library.new();
+
         // Project Deployments
         cached.vader = await Vader.new(...configs.Vader(accounts, cached));
 
@@ -343,6 +349,10 @@ module.exports = (artifacts) => {
 
         cached.xVader = await XVader.new(...configs.XVader(accounts, cached));
 
+        cached.mockUniswapV2Factory = await MockUniswapV2Factory.new(
+            ...configs.MockUniswapV2Factory(accounts, cached)
+        );
+
         return cached;
     };
 
@@ -396,5 +406,7 @@ module.exports = (artifacts) => {
 
         // Helpers
         mintAndApprove,
+
+        UniswapV2Pair,
     };
 };

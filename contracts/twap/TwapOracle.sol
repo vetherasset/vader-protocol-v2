@@ -280,7 +280,7 @@ contract TwapOracle is Ownable {
 
         if (token0 == VADER) {
             IUniswapV2Pair pair = IUniswapV2Pair(
-                UniswapV2Library.pairFor(factory, token0, token1)
+                IUniswapV2Factory(factory).getPair(token0, token1)
             );
             pairAddr = address(pair);
             price0CumulativeLast = pair.price0CumulativeLast();

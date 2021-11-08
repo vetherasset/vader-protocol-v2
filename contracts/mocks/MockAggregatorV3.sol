@@ -9,7 +9,7 @@ contract MockAggregatorV3 {
 
     uint80 private _storedRoundId;
 
-    constructor(IERC20 _token) public {
+    constructor(IERC20 _token) {
         token = _token;
     }
 
