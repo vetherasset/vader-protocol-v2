@@ -12,7 +12,7 @@ contract Treasury is Ownable, ITreasury {
     using SafeERC20 for IERC20;
     using SafeMath for uint;
 
-    event SetBondContract(address bond, bool apisBondContractproved);
+    event SetBondContract(address bond, bool approved);
     event Withdraw(address indexed token, address indexed destination, uint amount);
 
     uint8 private immutable PAYOUT_TOKEN_DECIMALS;
