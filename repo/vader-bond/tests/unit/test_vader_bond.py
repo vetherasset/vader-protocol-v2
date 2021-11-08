@@ -2,7 +2,7 @@ import brownie
 from brownie import VaderBond, TestToken, ZERO_ADDRESS
 
 ## Terms
-CONTROL_VAR = 2000
+CONTROL_VAR = 10 ** 6
 VESTING_TERM = 10000
 # 0.9 payout
 MIN_PRICE = 0.9 * 10 ** 6

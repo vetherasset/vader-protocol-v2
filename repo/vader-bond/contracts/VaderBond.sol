@@ -309,11 +309,11 @@ contract VaderBond is Ownable, ReentrancyGuard {
     /**
      *  @notice calculate current bond premium
      *  @return price uint
+     *  @dev price = 10 ** principal token decimals = 1 principal token buys 1 bond
      */
     function bondPrice() public view returns (uint price) {
-        // NOTE: bond price scaled to principal token decimals
-        // NOTE: debt ratio scaled up with 1e18, so we divide here
-        price = terms.controlVariable.mul(debtRatio()).mul(10**PRINCIPAL_TOKEN_DECIMALS) / 1e18;
+        // NOTE: debt ratio scaled up with 1e18, so divide by 1e18
+        price = terms.controlVariable.mul(debtRatio()) / 1e18;
         if (price < terms.minPrice) {
             price = terms.minPrice;
         }
@@ -344,8 +344,8 @@ contract VaderBond is Ownable, ReentrancyGuard {
 
         B = A / P
         */
-        // NOTE: value must match payout token decimals
-        // NOTE: bond price matches principal token decimals
+        // NOTE: decimals of value must match payout token decimals
+        // NOTE: bond price must match principal token decimals
         return _value.mul(10**PRINCIPAL_TOKEN_DECIMALS).div(bondPrice());
     }
 
