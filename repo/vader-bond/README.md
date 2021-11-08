@@ -9,6 +9,8 @@ virtualenv -p python3 venv
 source venv/bin/activate
 
 pip install eth-brownie
+pip install matplotlib
+pip install numpy
 
 brownie pm install OpenZeppelin/openzeppelin-contracts@3.4.2
 

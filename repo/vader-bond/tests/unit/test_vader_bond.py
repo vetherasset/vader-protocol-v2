@@ -2,14 +2,13 @@ import brownie
 from brownie import VaderBond, TestToken, ZERO_ADDRESS
 
 ## Terms
-CONTROL_VAR = 10 ** 6
+CONTROL_VAR = 1e6
 VESTING_TERM = 10000
-# 0.9 payout
-MIN_PRICE = 0.9 * 10 ** 6
+MIN_PRICE = 0.1 * 1e6
 MAX_PAYOUT = 1000
-MAX_DEBT = 5
+MAX_DEBT = 50 * 1e18
 INITIAL_DEBT = 0
-PAYOUT_TOTAL_SUPPLY = 1000 * 10 ** 18
+PAYOUT_TOTAL_SUPPLY = 1e7 * 1e18
 
 ## Adjustment
 ADD = True
