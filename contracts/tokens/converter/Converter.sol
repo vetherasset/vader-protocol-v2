@@ -6,9 +6,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
 import "../../shared/ProtocolConstants.sol";
 
 import "../../interfaces/tokens/converter/IConverter.sol";
+import "../../interfaces/tokens/vesting/ILinearVesting.sol";
 
 /**
  * @dev Implementation of the {IConverter} interface.
@@ -28,6 +31,9 @@ contract Converter is IConverter, ProtocolConstants {
     // Used for safe VADER & VETHER transfers
     using SafeERC20 for IERC20;
 
+    // Using MerkleProof for validating claims
+    using MerkleProof for bytes32[];
+
     /* ========== STATE VARIABLES ========== */
 
     // The VETHER token
@@ -35,6 +41,15 @@ contract Converter is IConverter, ProtocolConstants {
 
     // The VADER token
     IERC20 public immutable vader;
+
+    // The VADER vesting contract
+    ILinearVesting public immutable vesting;
+
+    // The merkle proof root for validating claims
+    bytes32 public immutable root;
+
+    // Signals whether a particular leaf has been claimed of the merkle proof
+    mapping(bytes32 => bool) public claimed;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -44,14 +59,26 @@ contract Converter is IConverter, ProtocolConstants {
      * Performs rudimentary checks to ensure that the variables haven't
      * been declared incorrectly.
      */
-    constructor(IERC20 _vether, IERC20 _vader) {
+    constructor(
+        IERC20 _vether,
+        IERC20 _vader,
+        ILinearVesting _vesting,
+        bytes32 _root
+    ) {
         require(
-            _vether != IERC20(_ZERO_ADDRESS) && _vader != IERC20(_ZERO_ADDRESS),
+            _vether != IERC20(_ZERO_ADDRESS) &&
+                _vader != IERC20(_ZERO_ADDRESS) &&
+                _vesting != ILinearVesting(_ZERO_ADDRESS),
             "Converter::constructor: Misconfiguration"
         );
 
         vether = _vether;
         vader = _vader;
+
+        _vader.approve(address(_vesting), type(uint256).max);
+
+        vesting = _vesting;
+        root = _root;
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -71,7 +98,7 @@ contract Converter is IConverter, ProtocolConstants {
      * - the amount specified is non-zero
      * - the contract has been supplied with the necessary Vader amount to fulfill the trade
      */
-    function convert(uint256 amount)
+    function convert(bytes32[] calldata proof, uint256 amount)
         external
         override
         returns (uint256 vaderReceived)
@@ -81,11 +108,20 @@ contract Converter is IConverter, ProtocolConstants {
             "Converter::convert: Non-Zero Conversion Amount Required"
         );
 
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender, amount));
+        require(
+            !claimed[leaf] && proof.verify(root, leaf),
+            "Converter::convert: Incorrect Proof Provided"
+        );
+        claimed[leaf] = true;
+
         vaderReceived = amount * _VADER_VETHER_CONVERSION_RATE;
 
         emit Conversion(msg.sender, amount, vaderReceived);
 
         vether.safeTransferFrom(msg.sender, _BURN, amount);
-        vader.safeTransfer(msg.sender, vaderReceived);
+        uint256 half = vaderReceived / 2;
+        vader.safeTransfer(msg.sender, half);
+        vesting.vestFor(msg.sender, half);
     }
 }

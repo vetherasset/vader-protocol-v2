@@ -9,6 +9,8 @@ interface ILinearVesting {
     struct Vester {
         uint192 amount;
         uint64 lastClaim;
+        uint128 start;
+        uint128 end;
     }
 
     /* ========== FUNCTIONS ========== */
@@ -17,7 +19,11 @@ interface ILinearVesting {
 
     function claim() external returns (uint256 vestedAmount);
 
+    function claimConverted() external returns (uint256 vestedAmount);
+
     function begin() external;
+
+    function vestFor(address user, uint256 amount) external;
 
     /* ========== EVENTS ========== */
 

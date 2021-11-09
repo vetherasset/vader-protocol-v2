@@ -125,7 +125,55 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
     {
         Vester memory vester = vest[msg.sender];
 
+        require(
+            vester.start == 0,
+            "LinearVesting::claim: Incorrect Vesting Type"
+        );
+
         vestedAmount = _getClaim(vester.amount, vester.lastClaim);
+
+        require(vestedAmount != 0, "LinearVesting::claim: Nothing to claim");
+
+        vester.amount -= uint192(vestedAmount);
+        vester.lastClaim = uint64(block.timestamp);
+
+        vest[msg.sender] = vester;
+
+        emit Vested(msg.sender, vestedAmount);
+
+        vader.safeTransfer(msg.sender, vestedAmount);
+    }
+
+    /**
+     * @dev Allows a user to claim their pending vesting amount of the vested claim
+     *
+     * Emits a {Vested} event indicating the user who claimed their vested tokens
+     * as well as the amount that was vested.
+     *
+     * Requirements:
+     *
+     * - the vesting period has started
+     * - the caller must have a non-zero vested amount
+     */
+    function claimConverted() external override returns (uint256 vestedAmount) {
+        Vester memory vester = vest[msg.sender];
+
+        require(
+            vester.start != 0,
+            "LinearVesting::claim: Incorrect Vesting Type"
+        );
+
+        require(
+            vester.start < block.timestamp,
+            "LinearVesting::claim: Not Started Yet"
+        );
+
+        vestedAmount = _getClaim(
+            vester.amount,
+            vester.lastClaim,
+            vester.start,
+            vester.end
+        );
 
         require(vestedAmount != 0, "LinearVesting::claim: Nothing to claim");
 
@@ -160,6 +208,23 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
         renounceOwnership();
     }
 
+    /**
+     * @dev Adds a new vesting schedule to the contract
+     */
+    function vestFor(address user, uint256 amount) external override {
+        require(
+            vest[user].amount == 0,
+            "LinearVesting::selfVest: Already a vester"
+        );
+        vest[user] = Vester(
+            uint192(amount),
+            0,
+            uint128(block.timestamp),
+            uint128(block.timestamp + 365 days)
+        );
+        vader.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
     /* ========== PRIVATE FUNCTIONS ========== */
 
     /**
@@ -192,6 +257,39 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
 
         if (block.timestamp >= _end) return amount;
         if (lastClaim == 0) lastClaim = start;
+
+        return (amount * (block.timestamp - lastClaim)) / (_end - lastClaim);
+    }
+
+    /**
+     * @dev Calculates the amount a user's vest is due. To calculate,
+     * the following formula is utilized:
+     *
+     * - (remainingAmount * timeElapsed) / timeUntilEnd
+     *
+     * Each variable is described as follows:
+     *
+     * - remainingAmount (amount): Vesting amount remaining. Each claim subtracts from
+     * this amount to ensure calculations are properly conducted.
+     *
+     * - timeElapsed (block.timestamp.sub(lastClaim)): Time that has elapsed since the
+     * last claim.
+     *
+     * - timeUntilEnd (end.sub(lastClaim)): Time remaining for the particular vesting
+     * member's total duration.
+     *
+     * Vesting calculations are relative and always update the last
+     * claim timestamp as well as remaining amount whenever they
+     * are claimed.
+     */
+    function _getClaim(
+        uint256 amount,
+        uint256 lastClaim,
+        uint256 _start,
+        uint256 _end
+    ) private view returns (uint256) {
+        if (block.timestamp >= _end) return amount;
+        if (lastClaim == 0) lastClaim = _start;
 
         return (amount * (block.timestamp - lastClaim)) / (_end - lastClaim);
     }

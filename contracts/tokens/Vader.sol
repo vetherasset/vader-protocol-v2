@@ -117,13 +117,18 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @dev Allows the emission of an era to be manually synchronized in case of protocol inactivity.
+     * @dev Creates a manual emission event
      *
      * Emits an {Emission} event indicating the amount emitted as well as what the current
      * era's timestamp is.
      */
-    function syncEmissions() external override {
-        _syncEmissions();
+    function createEmission(address user, uint256 amount)
+        external
+        override
+        onlyOwner
+    {
+        _mint(user, amount);
+        emit Emission(user, amount);
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -199,26 +204,6 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     }
 
     /**
-     * @dev Allows the daily emission curve of the token to be adjusted.
-     *
-     * Emits an {EmissionChanged} event indicating the previous and next emission
-     * curves.
-     *
-     * Requirements:
-     *
-     * - the caller must be the DAO
-     * - the new emission must be non-zero
-     */
-    function adjustEmission(uint256 _emissionCurve) external onlyDAO {
-        require(
-            _emissionCurve != 0,
-            "Vader::adjustEmission: Incorrect Curve Emission"
-        );
-        emit EmissionChanged(emissionCurve, _emissionCurve);
-        emissionCurve = _emissionCurve;
-    }
-
-    /**
      * @dev Allows the maximum supply of the token to be adjusted.
      *
      * Emits an {MaxSupplyChanged} event indicating the previous and next maximum
@@ -284,36 +269,6 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     /* ========== PRIVATE FUNCTIONS ========== */
 
     /**
-     * @dev Syncs the current emission schedule by advancing the necessary epochs to match the
-     * current timestamp and mints the corresponding Vader to the USDV contract for distribution
-     * via the {distributeEmission} function.
-     */
-    function _syncEmissions() private {
-        uint256 currentSupply = totalSupply();
-        uint256 _lastEmission = lastEmission;
-        if (
-            block.timestamp >= _lastEmission + _EMISSION_ERA &&
-            maxSupply != currentSupply
-        ) {
-            uint256 eras = (block.timestamp - _lastEmission) / _EMISSION_ERA;
-
-            // NOTE: Current Supply + Emission guaranteed to not overflow as <= maxSupply
-            uint256 emission;
-            for (uint256 i = 0; i < eras; i++)
-                emission += getEraEmission(currentSupply + emission);
-
-            _mint(address(usdv), emission);
-
-            usdv.distributeEmission();
-
-            _lastEmission += (_EMISSION_ERA * eras);
-            lastEmission = _lastEmission;
-
-            emit Emission(emission, _lastEmission);
-        }
-    }
-
-    /**
      * @dev Ensures only the DAO is able to invoke a particular function by validating that the
      * contract has been set up and that the owner is the msg.sender
      */
@@ -337,4 +292,56 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         _onlyDAO();
         _;
     }
+
+    /* ========== DEPRECATED FUNCTIONS ========== */
+
+    /**
+     * @dev Allows the daily emission curve of the token to be adjusted.
+     *
+     * Emits an {EmissionChanged} event indicating the previous and next emission
+     * curves.
+     *
+     * Requirements:
+     *
+     * - the caller must be the DAO
+     * - the new emission must be non-zero
+     */
+    // function adjustEmission(uint256 _emissionCurve) external onlyDAO {
+    //     require(
+    //         _emissionCurve != 0,
+    //         "Vader::adjustEmission: Incorrect Curve Emission"
+    //     );
+    //     emit EmissionChanged(emissionCurve, _emissionCurve);
+    //     emissionCurve = _emissionCurve;
+    // }
+
+    /**
+     * @dev Syncs the current emission schedule by advancing the necessary epochs to match the
+     * current timestamp and mints the corresponding Vader to the USDV contract for distribution
+     * via the {distributeEmission} function.
+     */
+    // function _syncEmissions() private {
+    //     uint256 currentSupply = totalSupply();
+    //     uint256 _lastEmission = lastEmission;
+    //     if (
+    //         block.timestamp >= _lastEmission + _EMISSION_ERA &&
+    //         maxSupply != currentSupply
+    //     ) {
+    //         uint256 eras = (block.timestamp - _lastEmission) / _EMISSION_ERA;
+
+    //         // NOTE: Current Supply + Emission guaranteed to not overflow as <= maxSupply
+    //         uint256 emission;
+    //         for (uint256 i = 0; i < eras; i++)
+    //             emission += getEraEmission(currentSupply + emission);
+
+    //         _mint(address(usdv), emission);
+
+    //         usdv.distributeEmission();
+
+    //         _lastEmission += (_EMISSION_ERA * eras);
+    //         lastEmission = _lastEmission;
+
+    //         emit Emission(emission, _lastEmission);
+    //     }
+    // }
 }

@@ -5,7 +5,7 @@ pragma solidity =0.8.9;
 interface IVader {
     /* ========== FUNCTIONS ========== */
 
-    function syncEmissions() external;
+    function createEmission(address user, uint256 amount) external;
 
     function calculateFee() external view returns (uint256 basisPoints);
 
@@ -18,7 +18,7 @@ interface IVader {
 
     /* ========== EVENTS ========== */
 
-    event Emission(uint256 amount, uint256 lastEmission);
+    event Emission(address to, uint256 amount);
 
     event EmissionChanged(uint256 previous, uint256 next);
 
