@@ -153,13 +153,9 @@ contract TwapOracle is Ownable {
                 sumUSD += uint256(price);
             }
         }
-        sumUSD = sumUSD * (10 ** 10);
+        sumUSD = sumUSD * (10**10);
         require(sumNative != 0, "TwapOracle::consult: Sum of native is zero");
-        result = (
-            (
-                sumUSD * 10 ** IERC20Metadata(token).decimals()
-            ) / sumNative
-        );
+        result = ((sumUSD * 10**IERC20Metadata(token).decimals()) / sumNative);
     }
 
     /**

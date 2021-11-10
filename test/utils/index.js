@@ -199,14 +199,12 @@ module.exports = (artifacts) => {
         Converter: (_, { vader, vether, ADMINISTRATOR }) => [
             vether.address,
             vader.address,
-            "0xa940602589189f10b3011b6a878649093c3d87a8a26751a52f10e44ca75e7ba1",
-            123, // salt
-            ADMINISTRATOR,
-        ],
-        LinearVesting: (_, { vader, converter, ADMINISTRATOR }) => [
-            vader.address,
-            converter.address,
-            ADMINISTRATOR,
+            vesting.address,
+            [
+                125, 125, 125, 123, 125, 125, 125, 125, 125, 123, 125, 125, 125,
+                125, 125, 123, 125, 125, 125, 125, 125, 123, 125, 125, 125, 125,
+                125, 123, 125, 125, 125, 125,
+            ],
         ],
         GovernorAlpha: ({ account0, account1 }, { mockXVader }) => [
             account0,
