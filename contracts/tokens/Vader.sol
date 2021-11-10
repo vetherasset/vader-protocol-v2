@@ -67,7 +67,44 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * the converter and vesting contract are not known on deployment.
      */
     constructor() ERC20("Vader", "VADER") {
-        _mint(address(this), _GRANT_ALLOCATION);
+        _mint(address(this), _ECOSYSTEM_GROWTH);
+    }
+
+    /* ========== VIEWS ========== */
+
+    /**
+     * @dev Returns the current fee that the protocol applies to transactions. The fee
+     * organically adjusts itself as the actual total supply of the token fluctuates and
+     * will always hold a value between [0%, 1%] expressed in basis points.
+     */
+    function calculateFee() public view override returns (uint256 basisPoints) {
+        // basisPoints = (_MAX_FEE_BASIS_POINTS * totalSupply()) / maxSupply;
+        // test disable fee
+        basisPoints = 0;
+    }
+
+    /**
+     * @dev Returns the current era's emission based on the existing total supply of the
+     * token. The era emissions diminish as the total supply of the token increases, inching
+     * closer to 0 as the total supply reaches its cap.
+     */
+    function getCurrentEraEmission() external view override returns (uint256) {
+        return getEraEmission(totalSupply());
+    }
+
+    /**
+     * @dev Calculates and returns the constantly diminishing era emission based on the difference between
+     * the current and maximum supply spread over a one year based in on the emission's era duration.
+     */
+    function getEraEmission(uint256 currentSupply)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return
+            ((maxSupply - currentSupply) / emissionCurve) /
+            (_ONE_YEAR / _EMISSION_ERA);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
