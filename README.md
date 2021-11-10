@@ -14,6 +14,13 @@ touch .secret
 cp .env.sample .env
 ```
 
+## Test
+
+```
+npx ganache-cli
+npm test
+```
+
 ## Deploy
 
 ```shell
