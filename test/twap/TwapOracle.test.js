@@ -100,7 +100,7 @@ contract("Twap Oracle", (accounts) => {
         });
     });
 
-    describe("consult", () => {
+    describe.only("consult", () => {
         it("should consult for vader", async () => {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
@@ -126,11 +126,7 @@ contract("Twap Oracle", (accounts) => {
             // Set the supported tokens
             await poolV2.setTokenSupport(dai.address, true);
             await poolV2.setTokenSupport(mockUsdv.address, true);
-
-            // Initialize the twap
-            await twap.initialize(mockUsdv.address, token.address);
-
-            await twap.enableUSDV();
+            await poolV2.setTokenSupport(token.address, true);
 
             // Construct the deadline
             const latestBlock = await web3.eth.getBlock("latest");
@@ -139,23 +135,32 @@ contract("Twap Oracle", (accounts) => {
             // Amount to mint approve
             const accountsAmount = parseUnits(1000000, 18);
 
-            // ====== Set up Vader pool with USDV <-> DAI pair and add liquidity. ======
-
             // Mint and approve all tokens for the router
-            await mintAndApprove(
+            mintAndApprove(
                 accounts.account0,
-                poolV2.address,
+                routerV2.address,
                 dai,
                 accountsAmount
             );
-            await mintAndApprove(
+            mintAndApprove(
                 accounts.account0,
-                poolV2.address,
+                routerV2.address,
                 mockUsdv,
                 accountsAmount
             );
+            mintAndApprove(
+                accounts.account0,
+                routerV2.address,
+                token,
+                accountsAmount
+            );
 
-            const liquidity = parseUnits(1000, 18);
+            // Approve the pool also
+            await mockUsdv.approve(poolV2.address, accountsAmount);
+            await dai.approve(poolV2.address, accountsAmount);
+            await token.approve(poolV2.address, accountsAmount);
+
+            const liquidity = parseUnits(10000, 18);
 
             // Add liquidity
             await routerV2.addLiquidity(
@@ -166,6 +171,51 @@ contract("Twap Oracle", (accounts) => {
                 accounts.account0,
                 deadline
             );
+
+            // Add liquidity
+            await routerV2.addLiquidity(
+                mockUsdv.address,
+                token.address,
+                liquidity,
+                liquidity,
+                accounts.account0,
+                deadline
+            );
+
+            const amountIn = parseUnits(1000, 18);
+
+            // We dont care about output here
+            const amountOutMin = parseUnits(10, 18);
+
+            // // Swaps
+            // await routerV2.swapExactTokensForTokens(
+            //     amountIn,
+            //     amountOutMin,
+            //     [mockUsdv.address, dai.address],
+            //     accounts.account2,
+            //     deadline
+            // );
+            //
+            // await routerV2.swapExactTokensForTokens(
+            //     amountIn,
+            //     amountOutMin,
+            //     [mockUsdv.address, dai.address],
+            //     accounts.account2,
+            //     deadline
+            // );
+            //
+            // await routerV2.swapExactTokensForTokens(
+            //     amountIn,
+            //     amountOutMin,
+            //     [mockUsdv.address, token.address],
+            //     accounts.account2,
+            //     deadline
+            // );
+
+            // Initialize the twap
+            await twap.initialize(mockUsdv.address, token.address);
+
+            await twap.enableUSDV();
 
             // Register the pair
             await twap.registerPair(
@@ -173,62 +223,59 @@ contract("Twap Oracle", (accounts) => {
                 mockUsdv.address,
                 dai.address
             );
-
-            // Mint and approve all tokens for the router
-            await mintAndApprove(
-                accounts.account0,
-                poolV2.address,
-                dai,
-                accountsAmount
-            );
-            await mintAndApprove(
-                accounts.account0,
-                poolV2.address,
-                mockUsdv,
-                accountsAmount
-            );
-            // Add liquidity
-            await routerV2.addLiquidity(
+            await twap.registerPair(
+                UNSET_ADDRESS,
                 mockUsdv.address,
-                dai.address,
-                liquidity,
-                liquidity,
+                token.address
+            );
+
+            // // Debug
+            // const uniswapPairAddress = await mockUniswapV2Factory.getPair(
+            //     token.address,
+            //     mockUsdv.address
+            // );
+            // const uniswapPair = await UniswapV2Pair.at(uniswapPairAddress);
+
+            // // Approvals
+            // await token.approve(
+            //     mockUniswapV2Factory.address,
+            //     parseUnits(1000000, 18)
+            // );
+            // await token.approve(uniswapPair.address, parseUnits(1000000, 18));
+
+            // await mockUsdv.approve(
+            //     mockUniswapV2Factory.address,
+            //     parseUnits(1000000, 18)
+            // );
+            // await mockUsdv.approve(
+            //     uniswapPair.address,
+            //     parseUnits(1000000, 18)
+            // );
+
+            await token.approve(
+                mockUniswapV2Router.address,
+                parseUnits(10000000, 18)
+            );
+
+            await mockUsdv.approve(
+                mockUniswapV2Router.address,
+                parseUnits(10000000, 18)
+            );
+
+            const amountUniDesired = parseUnits(100, 18);
+            const amountUniMin = parseUnits(10, 18);
+
+            // Add liquidity to uniswap
+            await mockUniswapV2Router.addLiquidity(
+                token.address,
+                mockUsdv.address,
+                amountUniDesired,
+                amountUniDesired,
+                amountUniMin,
+                amountUniMin,
                 accounts.account0,
                 deadline
             );
-
-            // ========================
-
-            // ====== Setup Uniswap pool Vader <-> USDV and add liquidity ======
-            await mockUniswapV2Factory.createPair(
-                token.address,
-                mockUsdv.address
-            );
-
-            const uniswapPairAddress = await mockUniswapV2Factory.getPair(
-                token.address,
-                mockUsdv.address
-            );
-            const uniswapPair = await UniswapV2Pair.at(uniswapPairAddress);
-
-            await mintAndApprove(
-                accounts.account0,
-                uniswapPair.address,
-                token,
-                liquidity
-            );
-
-            await mintAndApprove(
-                accounts.account0,
-                uniswapPair.address,
-                mockUsdv,
-                liquidity
-            );
-
-            await token.transfer(uniswapPair.address, liquidity);
-            await mockUsdv.transfer(uniswapPair.address, liquidity);
-
-            await uniswapPair.mint(accounts.account0);
 
             // Register the pair
             await twap.registerPair(
@@ -237,71 +284,38 @@ contract("Twap Oracle", (accounts) => {
                 mockUsdv.address
             );
 
-            // Note: Was facing error in swapping so opted to deposit liquidity to update price.
-            await mintAndApprove(
-                accounts.account0,
-                uniswapPair.address,
-                token,
-                liquidity
-            );
-            await mintAndApprove(
-                accounts.account0,
-                uniswapPair.address,
-                mockUsdv,
-                liquidity
-            );
-            await token.transfer(uniswapPair.address, liquidity);
-            await mockUsdv.transfer(uniswapPair.address, liquidity);
-
-            await uniswapPair.mint(accounts.account0);
-
-            // ========================
-
-            // Setup aggregators where mock prices where 1 USDV = $1 and 1 Vader = $2
-            const usdvAggregator = await MockAggregatorV3.new(
-                mockUsdv.address,
-                parseUnits(1, 8)
-            );
-            const vaderAggregator = await MockAggregatorV3.new(
-                token.address,
-                parseUnits(2, 8)
-            );
+            // Create mock aggregators
+            const UsdvAggregator = await MockAggregatorV3.new(mockUsdv.address);
+            const VaderAggregator = await MockAggregatorV3.new(token.address);
 
             // Register the mock aggregators
-            await twap.registerAggregator(dai.address, usdvAggregator.address);
             await twap.registerAggregator(
                 mockUsdv.address,
-                vaderAggregator.address
+                UsdvAggregator.address
             );
+            await twap.registerAggregator(
+                token.address,
+                VaderAggregator.address
+            );
+
+            await advanceBlock();
 
             await advanceBlock();
 
             // Update needs to be called at least one time
             await twap.update();
 
-            // expectedRate is Vader against 1 USDV
-            const expectedRate = (await usdvAggregator.mockPrice())
-                .mul(big(10).pow(big(18)))
-                .div(await vaderAggregator.mockPrice());
-
-            const sourceAmount = parseUnits(10, 18);
-            const expectedUSDVFromVader = sourceAmount
-                .mul(big(10).pow(big(18)))
-                .div(expectedRate);
-
-            const expectedVaderFromUSDV = sourceAmount
-                .mul(expectedRate)
-                .div(big(10).pow(big(18)));
-
-            assertBn(await twap.getRate(), expectedRate);
-            assertBn(
-                await twap.usdvtoVader(sourceAmount),
-                expectedVaderFromUSDV
+            // Get consult for the usdv
+            console.log(
+                "Consult USDV  : ",
+                (await twap.consult(mockUsdv.address)).toString()
             );
-            assertBn(
-                await twap.vaderToUsdv(sourceAmount),
-                expectedUSDVFromVader
+
+            console.log(
+                "Consult Vader  : ",
+                (await twap.consult(token.address)).toString()
             );
+            console.log("Get rate : ", (await twap.getRate()).toString());
         });
     });
 

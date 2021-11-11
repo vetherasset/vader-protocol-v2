@@ -78,9 +78,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * will always hold a value between [0%, 1%] expressed in basis points.
      */
     function calculateFee() public view override returns (uint256 basisPoints) {
-        // basisPoints = (_MAX_FEE_BASIS_POINTS * totalSupply()) / maxSupply;
-        // test disable fee
-        basisPoints = 0;
+        basisPoints = (_MAX_FEE_BASIS_POINTS * totalSupply()) / maxSupply;
     }
 
     /**

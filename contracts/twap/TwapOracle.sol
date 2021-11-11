@@ -119,6 +119,9 @@ contract TwapOracle is Ownable {
 
         for (uint256 i = 0; i < pairCount; i++) {
             PairData memory pairData = _pairs[i];
+            uint80 roundID;
+            int256 price;
+            uint80 answeredInRound;
 
             if (token == pairData.token0) {
                 //
@@ -130,28 +133,28 @@ contract TwapOracle is Ownable {
                 if (pairData.price1Average._x != 0) {
                     require(nativeAmount != 0);
                 }
-                sumNative += nativeAmount;
-
-                (
-                    uint80 roundID,
-                    int256 price,
-                    ,
-                    ,
-                    uint80 answeredInRound
-                ) = AggregatorV3Interface(_aggregators[pairData.token1])
-                        .latestRoundData();
-
-                require(
-                    answeredInRound >= roundID,
-                    "TwapOracle::consult: stale chainlink price"
-                );
-                require(
-                    price != 0,
-                    "TwapOracle::consult: chainlink malfunction"
-                );
-
-                sumUSD += uint256(price);
+                (roundID, price, , , answeredInRound) = AggregatorV3Interface(
+                    _aggregators[pairData.token1]
+                ).latestRoundData();
+            } else if (token == pairData.token1) {
+                sumNative += pairData.price0Average.mul(1).decode144(); // native asset amount
+                if (pairData.price0Average._x != 0) {
+                    require(sumNative != 0);
+                }
+                (roundID, price, , , answeredInRound) = AggregatorV3Interface(
+                    _aggregators[pairData.token0]
+                ).latestRoundData();
+            } else {
+                revert("Error in consult");
             }
+
+            require(
+                answeredInRound >= roundID,
+                "TwapOracle::consult: stale chainlink price"
+            );
+            require(price != 0, "TwapOracle::consult: chainlink malfunction");
+
+            sumUSD += uint256(price);
         }
         sumUSD = sumUSD * (10**10);
         require(sumNative != 0, "TwapOracle::consult: Sum of native is zero");
@@ -164,7 +167,7 @@ contract TwapOracle is Ownable {
     function getRate() public view returns (uint256 result) {
         uint256 tUSDForUSDV = consult(USDV);
         uint256 tUSDForVader = consult(VADER);
-        tUSDForUSDV = tUSDForUSDV * (10 ** 18);
+        tUSDForUSDV = tUSDForUSDV * (10**18);
 
         result = tUSDForUSDV / tUSDForVader;
     }
@@ -286,6 +289,8 @@ contract TwapOracle is Ownable {
                 IUniswapV2Factory(factory).getPair(token0, token1)
             );
             pairAddr = address(pair);
+            token0 = pair.token0();
+            token1 = pair.token1();
             price0CumulativeLast = pair.price0CumulativeLast();
             price1CumulativeLast = pair.price1CumulativeLast();
             (reserve0, reserve1, blockTimestampLast) = pair.getReserves();
@@ -341,7 +346,7 @@ contract TwapOracle is Ownable {
                 uint256 price0Cumulative,
                 uint256 price1Cumulative,
                 uint32 blockTimestamp
-            ) = (_token0 == VADER)
+            ) = (pairData.token0 == VADER || pairData.token1 == VADER)
                     ? UniswapV2OracleLibrary.currentCumulativePrices(
                         pairData.pair
                     )

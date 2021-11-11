@@ -200,11 +200,7 @@ module.exports = (artifacts) => {
             vether.address,
             vader.address,
             vesting.address,
-            [
-                125, 125, 125, 123, 125, 125, 125, 125, 125, 123, 125, 125, 125,
-                125, 125, 123, 125, 125, 125, 125, 125, 123, 125, 125, 125, 125,
-                125, 123, 125, 125, 125, 125,
-            ],
+            root(),
         ],
         GovernorAlpha: ({ account0, account1 }, { mockXVader }) => [
             account0,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+// SPDX-License-Identifier: Unlicense
 pragma solidity =0.8.9;
 
 interface IUniswapV2Router01 {
@@ -158,4 +158,8 @@ interface IUniswapV2Router01 {
         external
         view
         returns (uint256[] memory amounts);
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> merge
