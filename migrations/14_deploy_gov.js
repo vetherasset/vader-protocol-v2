@@ -1,15 +1,16 @@
-// TODO: use Vault
-const MockVault = artifacts.require("MockVault");
-const USDV = artifacts.require("USDV");
+const XVader = artifacts.require("XVader");
 const GovernorAlpha = artifacts.require("GovernorAlpha");
 
 module.exports = async function (deployer, network, accounts) {
     // skip development
     if (network == "development") {
-        return
+        return;
     }
-    const vault = await MockVault.deployed();
-    const usdv = await USDV.deployed();
+    if (network !== "kovan") {
+        throw new Error("fix parameters for mainnet");
+    }
+
+    const xVader = await XVader.deployed();
 
     // TODO: guardian address
     const guardian = accounts[0];
@@ -20,15 +21,10 @@ module.exports = async function (deployer, network, accounts) {
     // TODO: council address
     const council = accounts[0];
 
-    if (network !== "kovan") {
-        throw new Error("fix parameters for mainnet");
-    }
-
     await deployer.deploy(
         GovernorAlpha,
-        vault.address,
         guardian,
-        usdv.address,
+        xVader.address,
         feeReceiver,
         feeAmount,
         council

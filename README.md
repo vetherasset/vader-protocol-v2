@@ -47,7 +47,6 @@ npx truffle run verify MyContract --network kovan
 -   LPWrapper: [0x2Ca66c2Bd91c80AC5CB811ef69d2148298D7dFBC](https://kovan.etherscan.io/address/0x2Ca66c2Bd91c80AC5CB811ef69d2148298D7dFBC)
 -   TwapOralce: [0xbC6F88F4F06d781e2cdAE1E2313611c06aE00601](https://kovan.etherscan.io/address/0xbC6F88F4F06d781e2cdAE1E2313611c06aE00601)
 
--   Timelock: [0x6A7A87ACB4Da025A649140dd049C360394832A12](https://kovan.etherscan.io/address/0x6A7A87ACB4Da025A649140dd049C360394832A12)
--   GovernorAlpha: [0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e](https://kovan.etherscan.io/address/0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e)
-
 -   XVader: [0xD72237277a5A0EcDD87D1F16ae00b5dBe6C61C6a](https://kovan.etherscan.io/address/0xD72237277a5A0EcDD87D1F16ae00b5dBe6C61C6a)
+-   Timelock: [0x6A7A87ACB4Da025A649140dd049C360394832A12](https://kovan.etherscan.io/address/0x6A7A87ACB4Da025A649140dd049C360394832A12)
+-   GovernorAlpha: [0x0909B27c4653AA017fce8a6Be2B7835FD9f034c2](https://kovan.etherscan.io/address/0x0909B27c4653AA017fce8a6Be2B7835FD9f034c2)
