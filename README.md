@@ -38,7 +38,7 @@ npx truffle run verify MyContract --network kovan
 -   Vader: [0x42e05423368A8F937F4cA6463ff3E1Af581226A1](https://kovan.etherscan.io/address/0x42e05423368A8F937F4cA6463ff3E1Af581226A1)
 -   Converter: [0x59931212011bF57a466B71257275Ff6D38432Be7](https://kovan.etherscan.io/address/0x59931212011bF57a466B71257275Ff6D38432Be7)
 -   LinearVesting: [0x34f08b70a1A32A5c107Af7548F634038ac6CC856](https://kovan.etherscan.io/address/0x34f08b70a1A32A5c107Af7548F634038ac6CC856)
--   VaderReserve: [0xd3d6e14150530105ef7873D860BEc97F75a4F369](https://kovan.etherscan.io/address/0xd3d6e14150530105ef7873D860BEc97F75a4F369)
+-   VaderReserve: [0x6FB2992DB95CCA4BD7e8969E2AB3f94AAA3565e6](https://kovan.etherscan.io/address/0x6FB2992DB95CCA4BD7e8969E2AB3f94AAA3565e6)
 -   USDV: [0xfd87ba583bd2071713fb5CB12086536a26eec18e](https://kovan.etherscan.io/address/0xfd87ba583bd2071713fb5CB12086536a26eec18e)
 
 -   VaderMath: [0x3a04c32a4146746D2c0AF48d9412277303e070Ea](https://kovan.etherscan.io/address/0x3a04c32a4146746D2c0AF48d9412277303e070Ea)
@@ -51,4 +51,4 @@ npx truffle run verify MyContract --network kovan
 -   Timelock: [0x02e3157Df831C3454d008901ddBB108C301E378a](https://kovan.etherscan.io/address/0x02e3157Df831C3454d008901ddBB108C301E378a)
 -   GovernorAlpha: [0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e](https://kovan.etherscan.io/address/0xa8D27FEF019B93Cb99e1a51ef463919ec4BDAb0e)
 
--   XVader (fake Vader): [0xD72237277a5A0EcDD87D1F16ae00b5dBe6C61C6a](https://kovan.etherscan.io/address/0xD72237277a5A0EcDD87D1F16ae00b5dBe6C61C6a)
+-   XVader: [0xD72237277a5A0EcDD87D1F16ae00b5dBe6C61C6a](https://kovan.etherscan.io/address/0xD72237277a5A0EcDD87D1F16ae00b5dBe6C61C6a)
