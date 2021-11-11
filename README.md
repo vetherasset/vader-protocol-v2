@@ -42,7 +42,7 @@ npx truffle run verify MyContract --network kovan
 -   USDV: [0x3C35779BaBFbdeC11633dEadda00a558F2875De5](https://kovan.etherscan.io/address/0x3C35779BaBFbdeC11633dEadda00a558F2875De5)
 
 -   VaderPoolV2: [0x53c661c2214833dFC1d309C6d956e6cE8f776D11](https://kovan.etherscan.io/address/0x53c661c2214833dFC1d309C6d956e6cE8f776D11)
--   VaderRouterV2: [0x784634B1c7136575D93Ce66Da3A14a9352015063](https://kovan.etherscan.io/address/0x784634B1c7136575D93Ce66Da3A14a9352015063)
+-   VaderRouterV2: [0x663CA015052317ef6576C34cA71fc86F470F096c](https://kovan.etherscan.io/address/0x663CA015052317ef6576C34cA71fc86F470F096c)
 -   SynthFactory: [0xfdD944fa68C5a0D08D814E58a72a685BcA59105F](https://kovan.etherscan.io/address/0xfdD944fa68C5a0D08D814E58a72a685BcA59105F)
 -   LPWrapper: [0x27Fa1AE61Ab123491Bd29013F4481bB7B0f6c4D8](https://kovan.etherscan.io/address/0x27Fa1AE61Ab123491Bd29013F4481bB7B0f6c4D8)
 
