@@ -158,8 +158,4 @@ interface IUniswapV2Router01 {
         external
         view
         returns (uint256[] memory amounts);
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> merge

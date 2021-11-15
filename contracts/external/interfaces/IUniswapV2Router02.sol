@@ -49,8 +49,4 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
         address to,
         uint256 deadline
     ) external;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> merge

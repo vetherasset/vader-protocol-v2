@@ -36,7 +36,7 @@ contract GovernorAlpha {
     uint256 public constant VOTING_DELAY = 1;
 
     // The duration of voting on a proposal, in blocks
-    uint256 public constant VOTING_PERIOD = 17280; // ~3 days in blocks (assuming 15s blocks)
+    uint256 public immutable VOTING_PERIOD;
 
     // The address of the Vader Protocol Timelock
     ITimelock public timelock;
