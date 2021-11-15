@@ -10,20 +10,9 @@ contract MockGovernorAlpha is GovernorAlpha {
         address xVader_,
         address feeReceiver_,
         uint256 feeAmount_,
-        address council_
-    )
-        GovernorAlpha(
-            guardian_,
-            xVader_,
-            feeReceiver_,
-            feeAmount_,
-            council_
-        )
-    {}
-
-    function votingPeriod() public pure override returns (uint256) {
-        return 50;
-    }
+        address council_,
+        uint256 votingPeriod_
+    ) GovernorAlpha(guardian_, xVader_, feeReceiver_, feeAmount_, council_, votingPeriod_) {}
 
     /// @notice mock function to get chain id from CHAINID opcode.
     /// Using ganache in truffle sets chainid but the a separate ganache or ganache in solidity-coverage

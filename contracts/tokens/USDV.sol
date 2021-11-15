@@ -15,7 +15,6 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
     /* ========== STATE VARIABLES ========== */
 
     IERC20 public immutable vader;
-    IVaderReserve public immutable reserve;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -27,18 +26,11 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
             "USDV::constructor: Incorrect Arguments"
         );
         vader = _vader;
-        reserve = _reserve;
     }
 
     /* ========== VIEWS ========== */
 
     /* ========== MUTATIVE FUNCTIONS ========== */
-
-    function distributeEmission() external override {
-        // TODO: Adjust when incentives clearly defined
-        uint256 balance = vader.balanceOf(address(this));
-        vader.transfer(address(reserve), balance);
-    }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 

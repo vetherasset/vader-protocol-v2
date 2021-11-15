@@ -2,6 +2,9 @@ const {
     time, // Time support with custom block timeouts
 } = require("@openzeppelin/test-helpers");
 
+const { MerkleTree } = require("merkletreejs");
+const SHA256 = require("crypto-js/sha256");
+
 module.exports = (artifacts) => {
     // Mocks
     const MockToken = artifacts.require("MockToken");
@@ -10,7 +13,8 @@ module.exports = (artifacts) => {
     const MockXVader = artifacts.require("MockXVader");
     const Timelock = artifacts.require("MockTimelock");
     const MockAggregatorV3 = artifacts.require("MockAggregatorV3");
-    const MockUniswapV2Library = artifacts.require("MockUniswapV2Library");
+    const MockUniswapV2Factory = artifacts.require("MockUniswapV2Factory");
+    const MockUniswapV2Router = artifacts.require("MockUniswapV2Router");
 
     // Project Contracts
     const Vader = artifacts.require("Vader");
@@ -33,13 +37,19 @@ module.exports = (artifacts) => {
     const LPWrapper = artifacts.require("LPWrapper");
     const TWAP = artifacts.require("TwapOracle");
     const XVader = artifacts.require("XVader");
-    const MockUniswapV2Factory = artifacts.require("MockUniswapV2Factory");
     const UniswapV2Pair = artifacts.require("UniswapV2Pair");
 
     // Libraries
     const VaderMath = artifacts.require("VaderMath");
+    // const UniswapV2Library = artifacts.require("UniswapV2Library");
 
     // Generic Utilities
+    const root = () => {
+        const leaves = ["a", "b", "c"].map((x) => SHA256(x));
+        const tree = new MerkleTree(leaves, SHA256);
+        const root = tree.getRoot().toString("hex");
+        return "0x" + root;
+    };
 
     const big = (n) => web3.utils.toBN(n);
 
@@ -196,13 +206,19 @@ module.exports = (artifacts) => {
             [PROJECT_CONSTANTS.TEAM_ALLOCATION],
             ADMINISTRATOR,
         ],
-        Converter: (_, { vader, vether }) => [vether.address, vader.address],
+        Converter: (_, { vader, vether, vesting }) => [
+            vether.address,
+            vader.address,
+            vesting.address,
+            root(),
+        ],
         GovernorAlpha: ({ account0, account1 }, { mockXVader }) => [
             account0,
             mockXVader.address,
             account1,
             parseUnits(1000, 18),
             account0,
+            50, // voting period of 50 blocks for testing
         ],
         MockXVader: (_, { vader }) => [vader.address],
         Timelock: (_, { governorAlpha }) => [
@@ -216,6 +232,10 @@ module.exports = (artifacts) => {
         TWAP: (_, { poolV2 }) => [poolV2.address, big(1)],
         XVader: (_, { vader }) => [vader.address],
         MockUniswapV2Factory: ({ account0 }, _) => [account0],
+        MockUniswapV2Router: (_, { mockUniswapV2Factory, weth }) => [
+            mockUniswapV2Factory.address,
+            weth.address,
+        ],
     };
 
     // Project Utilities
@@ -292,8 +312,7 @@ module.exports = (artifacts) => {
         cached.erc20Dec8 = await MockToken.new("DEC8", "DEC8", 8);
         cached.erc20Dec12 = await MockToken.new("DEC12", "DEC12", 12);
         cached.maliciousToken = await MockToken.new("MALC", "MALC", 18);
-
-        cached.mockUniswapV2Library = await MockUniswapV2Library.new();
+        cached.weth = await MockToken.new("WETH", "WETH", 18);
 
         // Project Deployments
         cached.vader = await Vader.new(...configs.Vader(accounts, cached));
@@ -351,6 +370,10 @@ module.exports = (artifacts) => {
 
         cached.mockUniswapV2Factory = await MockUniswapV2Factory.new(
             ...configs.MockUniswapV2Factory(accounts, cached)
+        );
+
+        cached.mockUniswapV2Router = await MockUniswapV2Router.new(
+            ...configs.MockUniswapV2Router(accounts, cached)
         );
 
         return cached;

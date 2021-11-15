@@ -26,7 +26,7 @@ const {
     UniswapV2Pair,
 } = require("../utils")(artifacts);
 
-contract("Twap Oracle", (accounts) => {
+contract.only("Twap Oracle", (accounts) => {
     describe("construction", () => {
         it("should construct the twap", async () => {
             if (Array.isArray(accounts))
@@ -80,7 +80,7 @@ contract("Twap Oracle", (accounts) => {
         it("should not allow to register when already exists", async () => {
             const { twap, mockUsdv } = await deployMock();
 
-            const USDVAggregator = await MockAggregatorV3.new(mockUsdv.address);
+            const USDVAggregator = await MockAggregatorV3.new(mockUsdv.address, parseUnits(1, 8));
 
             await twap.registerAggregator(
                 mockUsdv.address,
@@ -97,200 +97,202 @@ contract("Twap Oracle", (accounts) => {
         });
     });
 
-    // describe("consult", () => {
-    //     it("should consult for vader", async () => {
-    //         if (Array.isArray(accounts))
-    //             accounts = await verboseAccounts(accounts);
-    //         const {
-    //             twap,
-    //             dai,
-    //             mockUsdv,
-    //             poolV2,
-    //             routerV2,
-    //             token,
-    //             mockUniswapV2Factory,
-    //             mockUniswapV2Library,
-    //         } = await deployMock(accounts);
+    describe("consult", () => {
+        it("should consult for vader", async () => {
+            if (Array.isArray(accounts))
+                accounts = await verboseAccounts(accounts);
+            const {
+                twap,
+                dai,
+                mockUsdv,
+                poolV2,
+                routerV2,
+                token,
+                mockUniswapV2Factory,
+                lpWrapper,
+                synthFactory,
+                mockUniswapV2Router,
+            } = await deployMock(accounts);
 
-    //         const mockAccount = accounts.account5;
-    //         await poolV2.initialize(mockAccount, mockAccount, routerV2.address);
+            await poolV2.initialize(
+                lpWrapper.address,
+                synthFactory.address,
+                routerV2.address
+            );
 
-    //         // Set the supported tokens
-    //         await poolV2.setTokenSupport(dai.address, true);
-    //         await poolV2.setTokenSupport(mockUsdv.address, true);
-    //         await poolV2.setTokenSupport(token.address, true);
+            // Set the supported tokens
+            await poolV2.setTokenSupport(dai.address, true);
+            await poolV2.setTokenSupport(mockUsdv.address, true);
 
-    //         // Construct the deadline
-    //         const latestBlock = await web3.eth.getBlock("latest");
-    //         const deadline = latestBlock.timestamp + 1000;
+            // Initialize the twap
+            await twap.initialize(mockUsdv.address, token.address);
 
-    //         // Amount to mint approve
-    //         const accountsAmount = parseUnits(1000000, 18);
+            await twap.enableUSDV();
 
-    //         // Mint and approve all tokens for the router
-    //         mintAndApprove(
-    //             accounts.account0,
-    //             routerV2.address,
-    //             dai,
-    //             accountsAmount
-    //         );
-    //         mintAndApprove(
-    //             accounts.account0,
-    //             routerV2.address,
-    //             mockUsdv,
-    //             accountsAmount
-    //         );
-    //         mintAndApprove(
-    //             accounts.account0,
-    //             routerV2.address,
-    //             token,
-    //             accountsAmount
-    //         );
+            // Construct the deadline
+            const latestBlock = await web3.eth.getBlock("latest");
+            const deadline = latestBlock.timestamp + 1000;
 
-    //         // Approve the pool also
-    //         await mockUsdv.approve(poolV2.address, accountsAmount);
-    //         await dai.approve(poolV2.address, accountsAmount);
-    //         await token.approve(poolV2.address, accountsAmount);
+            // Amount to mint approve
+            const accountsAmount = parseUnits(1000000, 18);
 
-    //         const liquidity = parseUnits(10000, 18);
+            // ====== Set up Vader pool with USDV <-> DAI pair and add liquidity. ======
 
-    //         // Add liquidity
-    //         await routerV2.addLiquidity(
-    //             mockUsdv.address,
-    //             dai.address,
-    //             liquidity,
-    //             liquidity,
-    //             accounts.account0,
-    //             deadline
-    //         );
+            // Mint and approve all tokens for the router
+            await mintAndApprove(
+                accounts.account0,
+                poolV2.address,
+                dai,
+                accountsAmount
+            );
+            await mintAndApprove(
+                accounts.account0,
+                poolV2.address,
+                mockUsdv,
+                accountsAmount
+            );
 
-    //         // Add liquidity
-    //         await routerV2.addLiquidity(
-    //             mockUsdv.address,
-    //             token.address,
-    //             liquidity,
-    //             liquidity,
-    //             accounts.account0,
-    //             deadline
-    //         );
+            const liquidity = parseUnits(1000, 18);
 
-    //         const amountIn = parseUnits(1000, 18);
+            // Add liquidity
+            await routerV2.addLiquidity(
+                mockUsdv.address,
+                dai.address,
+                liquidity,
+                liquidity,
+                accounts.account0,
+                deadline
+            );
 
-    //         // We dont care about output here
-    //         const amountOutMin = parseUnits(10, 18);
+            // Register the pair
+            await twap.registerPair(
+                UNSET_ADDRESS,
+                mockUsdv.address,
+                dai.address
+            );
 
-    //         // Swap Dai
-    //         await routerV2.swapExactTokensForTokens(
-    //             amountIn,
-    //             amountOutMin,
-    //             [mockUsdv.address, dai.address],
-    //             accounts.account2,
-    //             deadline
-    //         );
+            // Mint and approve all tokens for the router
+            await mintAndApprove(
+                accounts.account0,
+                poolV2.address,
+                dai,
+                accountsAmount
+            );
+            await mintAndApprove(
+                accounts.account0,
+                poolV2.address,
+                mockUsdv,
+                accountsAmount
+            );
+            // Add liquidity
+            await routerV2.addLiquidity(
+                mockUsdv.address,
+                dai.address,
+                liquidity,
+                liquidity,
+                accounts.account0,
+                deadline
+            );
 
-    //         // Initialize the twap
-    //         await twap.initialize(mockUsdv.address, token.address);
+            // ========================
 
-    //         await twap.enableUSDV();
+            // ====== Setup Uniswap pool Vader <-> USDV and add liquidity ======
+            await mockUniswapV2Factory.createPair(token.address, mockUsdv.address);
 
-    //         // Register the pair
-    //         await twap.registerPair(
-    //             UNSET_ADDRESS,
-    //             mockUsdv.address,
-    //             dai.address
-    //         );
+            const uniswapPairAddress = await mockUniswapV2Factory.getPair(
+                token.address,
+                mockUsdv.address
+            );
+            const uniswapPair = await UniswapV2Pair.at(uniswapPairAddress);
 
-    //         // Create the uniswap pair
-    //         await mockUniswapV2Factory.createPair(
-    //             token.address,
-    //             mockUsdv.address
-    //         );
+            await mintAndApprove(
+                accounts.account0,
+                uniswapPair.address,
+                token,
+                liquidity
+            );
 
-    //         // Debug
-    //         const uniswapPairAddress = await mockUniswapV2Factory.getPair(
-    //             token.address,
-    //             mockUsdv.address
-    //         );
-    //         const uniswapPair = await UniswapV2Pair.at(uniswapPairAddress);
-    //         await token.approve(
-    //             mockUniswapV2Factory.address,
-    //             parseUnits(1000000, 18)
-    //         );
-    //         await token.approve(uniswapPair.address, parseUnits(1000000, 18));
-    //         await token.transferFrom(
-    //             accounts.account0,
-    //             uniswapPair.address,
-    //             parseUnits(1000, 18)
-    //         );
+            await mintAndApprove(
+                accounts.account0,
+                uniswapPair.address,
+                mockUsdv,
+                liquidity
+            );
 
-    //         await mockUniswapV2Library
-    //             .pairFor(
-    //                 mockUniswapV2Factory.address,
-    //                 token.address,
-    //                 mockUsdv.address
-    //             )
-    //             .then(console.log);
+            await token.transfer(uniswapPair.address, liquidity);
+            await mockUsdv.transfer(uniswapPair.address, liquidity);
 
-    //         // Create mock aggregators
-    //         const UsdvAggregator = await MockAggregatorV3.new(mockUsdv.address);
-    //         const DaiAggregator = await MockAggregatorV3.new(dai.address);
-    //         const VaderAggregator = await MockAggregatorV3.new(token.address);
+            await uniswapPair.mint(accounts.account0);
 
-    //         // Register the mock aggregators
-    //         await twap.registerAggregator(
-    //             mockUsdv.address,
-    //             UsdvAggregator.address
-    //         );
-    //         await twap.registerAggregator(dai.address, DaiAggregator.address);
-    //         await twap.registerAggregator(
-    //             token.address,
-    //             VaderAggregator.address
-    //         );
+            // Register the pair
+            await twap.registerPair(
+                mockUniswapV2Factory.address,
+                token.address,
+                mockUsdv.address
+            );
 
-    //         await advanceBlock();
+            // Note: Was facing error in swapping so opted to deposit liquidity to update price.
+            await mintAndApprove(
+                accounts.account0,
+                uniswapPair.address,
+                token,
+                liquidity
+            );
+            await mintAndApprove(
+                accounts.account0,
+                uniswapPair.address,
+                mockUsdv,
+                liquidity
+            );
+            await token.transfer(uniswapPair.address, liquidity);
+            await mockUsdv.transfer(uniswapPair.address, liquidity);
 
-    //         // Swap Dai
-    //         await routerV2.swapExactTokensForTokens(
-    //             amountIn,
-    //             amountOutMin,
-    //             [mockUsdv.address, dai.address],
-    //             accounts.account2,
-    //             deadline
-    //         );
+            await uniswapPair.mint(accounts.account0);
 
-    //         await routerV2.swapExactTokensForTokens(
-    //             amountIn,
-    //             amountOutMin,
-    //             [mockUsdv.address, token.address],
-    //             accounts.account2,
-    //             deadline
-    //         );
+            // ========================
 
-    //         // Register the pair
-    //         await twap.registerPair(
-    //             mockUniswapV2Factory.address,
-    //             token.address,
-    //             mockUsdv.address
-    //         );
+            // Setup aggregators where mock prices where 1 USDV = $1 and 1 Vader = $2
+            const usdvAggregator = await MockAggregatorV3.new(
+                mockUsdv.address, parseUnits(1, 8)
+            );
+            const vaderAggregator = await MockAggregatorV3.new(
+                token.address, parseUnits(2, 8)
+            );
 
-    //         await advanceBlock();
+            // Register the mock aggregators
+            await twap.registerAggregator(
+                dai.address,
+                usdvAggregator.address
+            );
+            await twap.registerAggregator(
+                mockUsdv.address,
+                vaderAggregator.address
+            );
 
-    //         // Update needs to be called at least one time
-    //         await twap.update();
+            await advanceBlock();
 
-    //         // Get consult for the usdv
-    //         console.log(
-    //             "Consult USDV  : ",
-    //             (await twap.consult(mockUsdv.address)).toString()
-    //         );
+            // Update needs to be called at least one time
+            await twap.update();
 
-    //         console.log(
-    //             "Consult Vader  : ",
-    //             (await twap.consult(token.address)).toString()
-    //         );
-    //         console.log("Get rate : ", (await twap.getRate()).toString());
-    //     });
-    // });
+            // expectedRate is Vader against 1 USDV
+            const expectedRate = (await usdvAggregator.mockPrice())
+                .mul(big(10).pow(big(18)))
+                .div((await vaderAggregator.mockPrice()));
+
+            const sourceAmount = parseUnits(10, 18);
+            const expectedUSDVFromVader = sourceAmount
+                .mul(big(10).pow(big(18)))
+                .div(expectedRate);
+
+            const expectedVaderFromUSDV = sourceAmount
+                .mul(expectedRate)
+                .div(big(10).pow(big(18)));
+
+            assertBn((await twap.getRate()), expectedRate);
+            assertBn((await twap.usdvtoVader(sourceAmount)), expectedVaderFromUSDV);
+            assertBn((await twap.vaderToUsdv(sourceAmount)), expectedUSDVFromVader);
+        });
+    });
 
     describe("register pair", () => {
         it("should not allow to register pair with a non owner account", async () => {

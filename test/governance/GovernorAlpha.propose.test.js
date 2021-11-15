@@ -168,7 +168,7 @@ contract("GovernorAlpha.propose", (accounts) => {
 
     it("fails when there are too many actions", async () => {
         const { governorAlpha, timelock } = await deployMock();
-        const maxActions = await governorAlpha.proposalMaxOperations();
+        const maxActions = await governorAlpha.PROPOSAL_MAX_OPERATIONS();
 
         const { targetsData } = await prepareTargetsAndData({
             timelock,
@@ -228,10 +228,10 @@ contract("GovernorAlpha.propose", (accounts) => {
 
             const startBlockExpected = big(
                 (await web3.eth.getBlock("latest")).number + 1
-            ).add(await this.governorAlpha.votingDelay());
+            ).add(await this.governorAlpha.VOTING_DELAY());
 
             const endBlockExpected = startBlockExpected.add(
-                await this.governorAlpha.votingPeriod()
+                await this.governorAlpha.VOTING_PERIOD()
             );
 
             assertEvents(

@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: Unlicense
-
+// SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
 pragma solidity =0.8.9;
 
 library VaderMath {
@@ -22,7 +21,7 @@ library VaderMath {
         uint256 assetDeposited,
         uint256 assetBalance,
         uint256 totalPoolUnits
-    ) public pure returns (uint256) {
+    ) internal pure returns (uint256) {
         // slipAdjustment
         uint256 slip = calculateSlipAdjustment(
             vaderDeposited,
@@ -43,15 +42,15 @@ library VaderMath {
     }
 
     /**
-    * @dev Calculates the necessary slippage adjustment for the {vaderDeposited} and {assetDeposited}
-    * amounts across the total {vaderBalance} and {assetBalance} amounts.
-    */
+     * @dev Calculates the necessary slippage adjustment for the {vaderDeposited} and {assetDeposited}
+     * amounts across the total {vaderBalance} and {assetBalance} amounts.
+     */
     function calculateSlipAdjustment(
         uint256 vaderDeposited,
         uint256 vaderBalance,
         uint256 assetDeposited,
         uint256 assetBalance
-    ) public pure returns (uint256) {
+    ) internal pure returns (uint256) {
         // Va
         uint256 vaderAsset = vaderBalance * assetDeposited;
 
@@ -67,15 +66,15 @@ library VaderMath {
     }
 
     /**
-    * @dev Calculates the loss based on the supplied {releasedVader} and {releasedAsset}
-    * compared to the supplied {originalVader} and {originalAsset}.
-    */
+     * @dev Calculates the loss based on the supplied {releasedVader} and {releasedAsset}
+     * compared to the supplied {originalVader} and {originalAsset}.
+     */
     function calculateLoss(
         uint256 originalVader,
         uint256 originalAsset,
         uint256 releasedVader,
         uint256 releasedAsset
-    ) public pure returns (uint256 loss) {
+    ) internal pure returns (uint256 loss) {
         //
         // TODO: Vader Formula Differs https://github.com/vetherasset/vaderprotocol-contracts/blob/main/contracts/Utils.sol#L347-L356
         //
@@ -93,14 +92,14 @@ library VaderMath {
     }
 
     /**
-    * @dev Calculates the {amountOut} of the swap based on the supplied {amountIn}
-    * across the supplied {reserveIn} and {reserveOut} amounts.
-    */
+     * @dev Calculates the {amountOut} of the swap based on the supplied {amountIn}
+     * across the supplied {reserveIn} and {reserveOut} amounts.
+     */
     function calculateSwap(
         uint256 amountIn,
         uint256 reserveIn,
         uint256 reserveOut
-    ) public pure returns (uint256 amountOut) {
+    ) internal pure returns (uint256 amountOut) {
         // x * Y * X
         uint256 numerator = amountIn * reserveIn * reserveOut;
 
@@ -111,14 +110,14 @@ library VaderMath {
     }
 
     /**
-    * @dev Calculates the {amountIn} of the swap based on the supplied {amountOut}
-    * across the supplied {reserveIn} and {reserveOut} amounts.
-    */
+     * @dev Calculates the {amountIn} of the swap based on the supplied {amountOut}
+     * across the supplied {reserveIn} and {reserveOut} amounts.
+     */
     function calculateSwapReverse(
         uint256 amountOut,
         uint256 reserveIn,
         uint256 reserveOut
-    ) public pure returns (uint256 amountIn) {
+    ) internal pure returns (uint256 amountIn) {
         // X * Y
         uint256 XY = reserveIn * reserveOut;
 
@@ -150,24 +149,24 @@ library VaderMath {
     }
 
     /**
-    * @dev Calculates the difference between the supplied {a} and {b} values as a positive number.
-    */
-    function delta(uint256 a, uint256 b) public pure returns (uint256) {
+     * @dev Calculates the difference between the supplied {a} and {b} values as a positive number.
+     */
+    function delta(uint256 a, uint256 b) internal pure returns (uint256) {
         return a > b ? a - b : b - a;
     }
 
     /**
-    * @dev Calculates the power of 2 of the supplied {a} value.
-    */
-    function pow(uint256 a) public pure returns (uint256) {
+     * @dev Calculates the power of 2 of the supplied {a} value.
+     */
+    function pow(uint256 a) internal pure returns (uint256) {
         return a * a;
     }
 
     /**
-    * @dev Calculates the square root {c} of the supplied {a} value utilizing the Babylonian method:
-    * https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
-    */
-    function root(uint256 a) public pure returns (uint256 c) {
+     * @dev Calculates the square root {c} of the supplied {a} value utilizing the Babylonian method:
+     * https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
+     */
+    function root(uint256 a) internal pure returns (uint256 c) {
         if (a > 3) {
             c = a;
             uint256 x = a / 2 + 1;

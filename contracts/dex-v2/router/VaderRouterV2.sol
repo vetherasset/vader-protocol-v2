@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: Unlicense
-
+// SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -215,14 +214,8 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
             ? (amountNative, amountForeign)
             : (amountForeign, amountNative);
 
-        require(
-            amountA >= amountAMin,
-            "VaderRouterV2: INSUFFICIENT_A_AMOUNT"
-        );
-        require(
-            amountB >= amountBMin,
-            "VaderRouterV2: INSUFFICIENT_B_AMOUNT"
-        );
+        require(amountA >= amountAMin, "VaderRouterV2: INSUFFICIENT_A_AMOUNT");
+        require(amountB >= amountBMin, "VaderRouterV2: INSUFFICIENT_B_AMOUNT");
 
         reserve.reimburseImpermanentLoss(msg.sender, coveredLoss);
     }
@@ -255,7 +248,7 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     /*
-    * @dev Sets the reserve address and renounces contract's ownership.
+     * @dev Sets the reserve address and renounces contract's ownership.
      *
      * Requirements:
      * - Only existing owner can call this function.

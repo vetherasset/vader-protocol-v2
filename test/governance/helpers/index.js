@@ -110,7 +110,7 @@ module.exports = ({
     const advanceBlockToVotingPeriodEnd = async ({
         governorAlpha,
     }) => {
-        const votingPeriod = await governorAlpha.votingPeriod();
+        const votingPeriod = await governorAlpha.VOTING_PERIOD();
         await time.advanceBlockTo(
             (await web3.eth.getBlock('latest'))
                 .number + votingPeriod.toNumber(),

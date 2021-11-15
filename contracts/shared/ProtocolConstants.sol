@@ -17,16 +17,16 @@ abstract contract ProtocolConstants {
     /* ========== VADER TOKEN ========== */
 
     // Max VADER supply
-    uint256 internal constant _INITIAL_VADER_SUPPLY = 2_500_000_000 * 1 ether;
+    uint256 internal constant _INITIAL_VADER_SUPPLY = 25_000_000_000 * 1 ether;
 
     // Allocation for VETH holders
-    uint256 internal constant _VETH_ALLOCATION = 1_000_000_000 * 1 ether;
+    uint256 internal constant _VETH_ALLOCATION = 7_500_000_000 * 1 ether;
 
     // Team allocation vested over {VESTING_DURATION} years
-    uint256 internal constant _TEAM_ALLOCATION = 250_000_000 * 1 ether;
+    uint256 internal constant _TEAM_ALLOCATION = 2_500_000_000 * 1 ether;
 
     // Ecosystem growth fund unlocked for partnerships & USDV provision
-    uint256 internal constant _ECOSYSTEM_GROWTH = 250_000_000 * 1 ether;
+    uint256 internal constant _ECOSYSTEM_GROWTH = 2_500_000_000 * 1 ether;
 
     // Emission Era
     uint256 internal constant _EMISSION_ERA = 24 hours;
@@ -45,7 +45,7 @@ abstract contract ProtocolConstants {
     /* ========== CONVERTER ========== */
 
     // Vader -> Vether Conversion Rate (1000:1)
-    uint256 internal constant _VADER_VETHER_CONVERSION_RATE = 1000;
+    uint256 internal constant _VADER_VETHER_CONVERSION_RATE = 10_000;
 
     // Burn Address
     address internal constant _BURN =

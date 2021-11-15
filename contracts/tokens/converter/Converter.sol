@@ -2,8 +2,6 @@
 
 pragma solidity =0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
@@ -27,9 +25,6 @@ import "../../interfaces/tokens/vesting/ILinearVesting.sol";
  */
 contract Converter is IConverter, ProtocolConstants {
     /* ========== LIBRARIES ========== */
-
-    // Used for safe VADER & VETHER transfers
-    using SafeERC20 for IERC20;
 
     // Using MerkleProof for validating claims
     using MerkleProof for bytes32[];
@@ -108,20 +103,45 @@ contract Converter is IConverter, ProtocolConstants {
             "Converter::convert: Non-Zero Conversion Amount Required"
         );
 
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender, amount));
+        bytes32 leaf = keccak256(
+            abi.encodePacked(
+                msg.sender,
+                amount,
+                address(this),
+                getChainId()
+            )
+        );
         require(
             !claimed[leaf] && proof.verify(root, leaf),
             "Converter::convert: Incorrect Proof Provided"
         );
         claimed[leaf] = true;
 
+        uint256 balanceBefore = vether.balanceOf(address(this));
+        vether.transferFrom(msg.sender, _BURN, amount);
+        amount = vether.balanceOf(address(this)) - balanceBefore;
+
         vaderReceived = amount * _VADER_VETHER_CONVERSION_RATE;
 
         emit Conversion(msg.sender, amount, vaderReceived);
 
-        vether.safeTransferFrom(msg.sender, _BURN, amount);
         uint256 half = vaderReceived / 2;
-        vader.safeTransfer(msg.sender, half);
-        vesting.vestFor(msg.sender, half);
+        vader.transfer(msg.sender, half);
+        vesting.vestFor(msg.sender, vaderReceived - half);
+    }
+
+    /* ========== INTERNAL FUNCTIONS ========== */
+    /*
+     * @dev Returns the {chainId} of current network.
+     **/
+    function getChainId()
+        internal
+        view
+        returns
+        (uint256 chainId)
+    {
+        assembly {
+            chainId := chainid()
+        }
     }
 }

@@ -205,7 +205,7 @@ contract Timelock is ITimelock {
             "Timelock::queueTransaction: Call must come from admin."
         );
         require(
-            eta >= getBlockTimestamp() + delay,
+            eta >= block.timestamp + delay,
             "Timelock::queueTransaction: Estimated execution block must satisfy delay."
         );
 
@@ -272,11 +272,11 @@ contract Timelock is ITimelock {
             "Timelock::executeTransaction: Transaction hasn't been queued."
         );
         require(
-            getBlockTimestamp() >= eta,
+            block.timestamp >= eta,
             "Timelock::executeTransaction: Transaction hasn't surpassed time lock."
         );
         require(
-            getBlockTimestamp() <= eta + GRACE_PERIOD(),
+            block.timestamp <= eta + GRACE_PERIOD(),
             "Timelock::executeTransaction: Transaction is stale."
         );
 
@@ -309,12 +309,4 @@ contract Timelock is ITimelock {
     }
 
     /* ========== INTERNAL FUNCTIONS ========== */
-
-    /**
-     * @dev Gets timestamp from the current block.
-     */
-    function getBlockTimestamp() internal view returns (uint256) {
-        // solium-disable-next-line security/no-block-members
-        return block.timestamp;
-    }
 }

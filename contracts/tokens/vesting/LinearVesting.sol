@@ -4,8 +4,6 @@ pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../../shared/ProtocolConstants.sol";
@@ -27,9 +25,6 @@ import "../../interfaces/tokens/vesting/ILinearVesting.sol";
 contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
     /* ========== LIBRARIES ========== */
 
-    // Used for safe VADER transfers
-    using SafeERC20 for IERC20;
-
     /* ========== STATE VARIABLES ========== */
 
     // The Vader token
@@ -44,6 +39,9 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
     // The status of each vesting member (Vester)
     mapping(address => Vester) public vest;
 
+    // The address of Converter contract.
+    address public converter;
+
     /* ========== CONSTRUCTOR ========== */
 
     /**
@@ -56,31 +54,15 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
      * Additionally, it transfers ownership to the Vader contract that needs to consequently
      * initiate the vesting period via {begin} after it mints the necessary amount to the contract.
      */
-    constructor(
-        IERC20 _vader,
-        address[] memory vesters,
-        uint192[] memory amounts
-    ) {
+    constructor(IERC20 _vader, address _converter) {
         require(
-            _vader != IERC20(_ZERO_ADDRESS) && vesters.length == amounts.length,
+            _vader != IERC20(_ZERO_ADDRESS)
+            && _converter != _ZERO_ADDRESS,
             "LinearVesting::constructor: Misconfiguration"
         );
 
         vader = _vader;
-
-        uint256 total;
-        for (uint256 i = 0; i < vesters.length; i++) {
-            require(
-                amounts[i] != 0,
-                "LinearVesting::constructor: Incorrect Amount Specified"
-            );
-            vest[vesters[i]].amount = amounts[i];
-            total = total + amounts[i];
-        }
-        require(
-            total == _TEAM_ALLOCATION,
-            "LinearVesting::constructor: Invalid Vest Amounts Specified"
-        );
+        converter = _converter;
 
         transferOwnership(address(_vader));
     }
@@ -93,15 +75,21 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
      * Requirements:
      * - the vesting period has started
      */
-    function getClaim()
+    function getClaim(address _vester)
         external
         view
         override
         hasStarted
         returns (uint256 vestedAmount)
     {
-        Vester memory vester = vest[msg.sender];
-        return _getClaim(vester.amount, vester.lastClaim);
+        Vester memory vester = vest[_vester];
+        return _getClaim(
+            vester.amount,
+            vester.lastClaim,
+            vester.start,
+            vester.end
+        );
+
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -117,32 +105,32 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
      * - the vesting period has started
      * - the caller must have a non-zero vested amount
      */
-    function claim()
-        external
-        override
-        hasStarted
-        returns (uint256 vestedAmount)
-    {
-        Vester memory vester = vest[msg.sender];
-
-        require(
-            vester.start == 0,
-            "LinearVesting::claim: Incorrect Vesting Type"
-        );
-
-        vestedAmount = _getClaim(vester.amount, vester.lastClaim);
-
-        require(vestedAmount != 0, "LinearVesting::claim: Nothing to claim");
-
-        vester.amount -= uint192(vestedAmount);
-        vester.lastClaim = uint64(block.timestamp);
-
-        vest[msg.sender] = vester;
-
-        emit Vested(msg.sender, vestedAmount);
-
-        vader.safeTransfer(msg.sender, vestedAmount);
-    }
+//    function claim()
+//        external
+//        override
+//        hasStarted
+//        returns (uint256 vestedAmount)
+//    {
+//        Vester memory vester = vest[msg.sender];
+//
+//        require(
+//            vester.start == 0,
+//            "LinearVesting::claim: Incorrect Vesting Type"
+//        );
+//
+//        vestedAmount = _getClaim(vester.amount, vester.lastClaim);
+//
+//        require(vestedAmount != 0, "LinearVesting::claim: Nothing to claim");
+//
+//        vester.amount -= uint192(vestedAmount);
+//        vester.lastClaim = uint64(block.timestamp);
+//
+//        vest[msg.sender] = vester;
+//
+//        emit Vested(msg.sender, vestedAmount);
+//
+//        vader.transfer(msg.sender, vestedAmount);
+//    }
 
     /**
      * @dev Allows a user to claim their pending vesting amount of the vested claim
@@ -155,7 +143,7 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
      * - the vesting period has started
      * - the caller must have a non-zero vested amount
      */
-    function claimConverted() external override returns (uint256 vestedAmount) {
+    function claim() external override returns (uint256 vestedAmount) {
         Vester memory vester = vest[msg.sender];
 
         require(
@@ -184,7 +172,7 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
 
         emit Vested(msg.sender, vestedAmount);
 
-        vader.safeTransfer(msg.sender, vestedAmount);
+        vader.transfer(msg.sender, vestedAmount);
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -199,9 +187,48 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
      *
      * - the caller must be the owner (vader token)
      */
-    function begin() external override onlyOwner {
-        start = block.timestamp;
-        end = block.timestamp + _VESTING_DURATION;
+    function begin(
+        address[] calldata vesters,
+        uint192[] calldata amounts
+    ) external override onlyOwner {
+        require(
+            vesters.length == amounts.length,
+            "LinearVesting::begin: Vesters and Amounts lengths do not match"
+        );
+
+        uint256 _start = block.timestamp;
+        uint256 _end = block.timestamp + _VESTING_DURATION;
+
+        start = _start;
+        end = _end;
+
+        uint256 total;
+        for (uint256 i = 0; i < vesters.length; i++) {
+            require(
+                amounts[i] != 0,
+                "LinearVesting::begin: Incorrect Amount Specified"
+            );
+            require(
+                vesters[i] != _ZERO_ADDRESS,
+                "LinearVesting::begin: Zero Vester Address Specified"
+            );
+            vest[vesters[i]] = Vester(
+                amounts[i],
+                0,
+                uint128(_start),
+                uint128(_end)
+            );
+            total = total + amounts[i];
+        }
+        require(
+            total == _TEAM_ALLOCATION,
+            "LinearVesting::begin: Invalid Vest Amounts Specified"
+        );
+
+        require(
+            vader.balanceOf(address(this)) >= _TEAM_ALLOCATION,
+            "LinearVesting::begin: Vader is less than TEAM_ALLOCATION"
+        );
 
         emit VestingInitialized(_VESTING_DURATION);
 
@@ -209,9 +236,21 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
     }
 
     /**
-     * @dev Adds a new vesting schedule to the contract
+     * @dev Adds a new vesting schedule to the contract.
+     *
+     * Requirements:
+     * - Only {converter} can call.
      */
-    function vestFor(address user, uint256 amount) external override {
+    function vestFor(address user, uint256 amount)
+        external
+        override
+        onlyConverter
+        hasStarted
+    {
+        require(
+            amount <= type(uint192).max,
+            "LinearVesting::vestFor: Amount Overflows uint192"
+        );
         require(
             vest[user].amount == 0,
             "LinearVesting::selfVest: Already a vester"
@@ -222,7 +261,7 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
             uint128(block.timestamp),
             uint128(block.timestamp + 365 days)
         );
-        vader.safeTransferFrom(msg.sender, address(this), amount);
+        vader.transferFrom(msg.sender, address(this), amount);
     }
 
     /* ========== PRIVATE FUNCTIONS ========== */
@@ -248,18 +287,13 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
      * claim timestamp as well as remaining amount whenever they
      * are claimed.
      */
-    function _getClaim(uint256 amount, uint256 lastClaim)
-        private
-        view
-        returns (uint256)
-    {
-        uint256 _end = end;
-
-        if (block.timestamp >= _end) return amount;
-        if (lastClaim == 0) lastClaim = start;
-
-        return (amount * (block.timestamp - lastClaim)) / (_end - lastClaim);
-    }
+//    function _getClaim(uint256 amount, uint256 lastClaim)
+//        private
+//        view
+//        returns (uint256)
+//    {
+//        return _getClaim(amount, lastClaim, start, end);
+//    }
 
     /**
      * @dev Calculates the amount a user's vest is due. To calculate,
@@ -304,6 +338,16 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
         );
     }
 
+    /*
+     * @dev Ensures that only converter is able to call a function.
+     **/
+    function _onlyConverter() private view {
+        require(
+            msg.sender == converter,
+            "LinearVesting::_onlyConverter: Only converter is allowed to call"
+        );
+    }
+
     /* ========== MODIFIERS ========== */
 
     /**
@@ -311,6 +355,14 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
      */
     modifier hasStarted() {
         _hasStarted();
+        _;
+    }
+
+    /*
+     * @dev Throws if called by address that is not converter.
+     **/
+    modifier onlyConverter() {
+        _onlyConverter();
         _;
     }
 }

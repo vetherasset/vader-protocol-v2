@@ -27,7 +27,16 @@ import "../interfaces/x-vader/IXVader.sol";
  */
 contract GovernorAlpha {
     // The name of this contract
-    string public constant name = "Vader Governor Alpha";
+    string public constant NAME = "Vader Governor Alpha";
+
+    // The maximum number of actions that can be included in a proposal
+    uint256 public constant PROPOSAL_MAX_OPERATIONS = 10;
+
+    // The delay before voting on a proposal may take place, once proposed
+    uint256 public constant VOTING_DELAY = 1;
+
+    // The duration of voting on a proposal, in blocks
+    uint256 public immutable VOTING_PERIOD;
 
     // The address of the Vader Protocol Timelock
     ITimelock public timelock;
@@ -195,7 +204,8 @@ contract GovernorAlpha {
         address xVader_,
         address feeReceiver_,
         uint256 feeAmount_,
-        address council_
+        address council_,
+        uint256 votingPeriod_
     ) {
         require(
             xVader_ != address(0),
@@ -215,6 +225,10 @@ contract GovernorAlpha {
         feeAmount = feeAmount_;
         council = council_;
 
+        VOTING_PERIOD = votingPeriod_ == 0
+            ? 17280 // ~3 days in blocks (assuming 15s blocks)
+            : votingPeriod_;
+
         emit FeeReceiverChanged(address(0), feeReceiver_);
         emit FeeAmountChanged(0, feeAmount_);
     }
@@ -224,21 +238,6 @@ contract GovernorAlpha {
     // The number of votes in support of a proposal required in order for a quorum to be reached and for a vote to succeed
     function quorumVotes(uint256 blockNumber) public view returns (uint256) {
         return (xVader.getPastTotalSupply(blockNumber) * 4) / 100; // 4% of xVader's supply at the time of proposal creation.
-    }
-
-    // The maximum number of actions that can be included in a proposal
-    function proposalMaxOperations() public pure returns (uint256) {
-        return 10; // 10 actions
-    }
-
-    // The delay before voting on a proposal may take place, once proposed
-    function votingDelay() public pure returns (uint256) {
-        return 1; // 1 block
-    }
-
-    // The duration of voting on a proposal, in blocks
-    function votingPeriod() public pure virtual returns (uint256) {
-        return 17280; // ~3 days in blocks (assuming 15s blocks)
     }
 
     /**
@@ -366,7 +365,7 @@ contract GovernorAlpha {
             "GovernorAlpha::propose: must provide actions"
         );
         require(
-            targets.length <= proposalMaxOperations(),
+            targets.length <= PROPOSAL_MAX_OPERATIONS,
             "GovernorAlpha::propose: too many actions"
         );
 
@@ -387,8 +386,8 @@ contract GovernorAlpha {
             );
         }
 
-        uint256 startBlock = block.number + votingDelay();
-        uint256 endBlock = startBlock + votingPeriod();
+        uint256 startBlock = block.number + VOTING_DELAY;
+        uint256 endBlock = startBlock + VOTING_PERIOD;
 
         proposalId = ++proposalCount;
         Proposal storage newProposal = proposals[proposalId];
@@ -499,7 +498,7 @@ contract GovernorAlpha {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
-                keccak256(bytes(name)),
+                keccak256(bytes(NAME)),
                 getChainId(),
                 address(this)
             )
@@ -745,7 +744,9 @@ contract GovernorAlpha {
 
         // optimistically casting to uint224 as xVader contract performs the checks for
         // votes to not overflow uint224.
-        uint224 votes = uint224(xVader.getPastVotes(voter, proposal.startBlock));
+        uint224 votes = uint224(
+            xVader.getPastVotes(voter, proposal.startBlock)
+        );
 
         if (support) {
             proposal.forVotes = proposal.forVotes + votes;

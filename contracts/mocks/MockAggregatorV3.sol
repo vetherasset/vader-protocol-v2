@@ -6,11 +6,12 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract MockAggregatorV3 {
     IERC20 public token;
-
+    int256 public mockPrice;
     uint80 private _storedRoundId;
 
-    constructor(IERC20 _token) {
+    constructor(IERC20 _token, int256 _mockPrice) {
         token = _token;
+        mockPrice = _mockPrice;
     }
 
     function decimals() external pure returns (uint8) {
@@ -34,7 +35,7 @@ contract MockAggregatorV3 {
     {
         // Mock Data
         roundId = _roundId;
-        answer = 1e8;
+        answer = mockPrice;
         startedAt = block.timestamp;
         updatedAt = block.timestamp;
         answeredInRound = roundId;
@@ -53,7 +54,7 @@ contract MockAggregatorV3 {
     {
         // Mock Data
         roundId = _storedRoundId + 1;
-        answer = 1e8;
+        answer = mockPrice;
         startedAt = block.timestamp;
         updatedAt = block.timestamp;
         answeredInRound = roundId;

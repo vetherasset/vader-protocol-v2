@@ -63,7 +63,7 @@ contract TwapOracle is Ownable {
     uint256 private _updatePeriod;
 
     // The collection of pairs tracked by the TWAP oracle.
-    PairData[] private _pairs;
+    PairData[] public _pairs;
 
     // A mapping of pair hashes to existence predicates.
     mapping(bytes32 => bool) private _pairExists;
@@ -126,10 +126,11 @@ contract TwapOracle is Ownable {
                 //   Verify price1Average is amount of USDV against 1 unit of token1
                 //
 
-                sumNative += pairData.price1Average.mul(1).decode144(); // native asset amount
+                uint256 nativeAmount = pairData.price1Average.mul(1).decode144(); // native asset amount
                 if (pairData.price1Average._x != 0) {
-                    require(sumNative != 0);
+                    require(nativeAmount != 0);
                 }
+                sumNative += nativeAmount;
 
                 (
                     uint80 roundID,
@@ -149,21 +150,27 @@ contract TwapOracle is Ownable {
                     "TwapOracle::consult: chainlink malfunction"
                 );
 
-                sumUSD += uint256(price) * (10**10);
+                sumUSD += uint256(price);
             }
         }
+        sumUSD = sumUSD * (10 ** 10);
         require(sumNative != 0, "TwapOracle::consult: Sum of native is zero");
-        result = ((sumUSD * IERC20Metadata(token).decimals()) / sumNative);
+        result = (
+            (
+                sumUSD * 10 ** IERC20Metadata(token).decimals()
+            ) / sumNative
+        );
     }
 
     /**
      * @dev Gets the exchange rate for the Vader to USDV.
      */
     function getRate() public view returns (uint256 result) {
-        uint256 tUSDInUSDV = consult(USDV);
-        uint256 tUSDInVader = consult(VADER);
+        uint256 tUSDForUSDV = consult(USDV);
+        uint256 tUSDForVader = consult(VADER);
+        tUSDForUSDV = tUSDForUSDV * (10 ** 18);
 
-        result = tUSDInUSDV / tUSDInVader;
+        result = tUSDForUSDV / tUSDForVader;
     }
 
     /**
@@ -171,7 +178,7 @@ contract TwapOracle is Ownable {
      * @param usdvAmount The amount in USDV.
      */
     function usdvtoVader(uint256 usdvAmount) external view returns (uint256) {
-        return usdvAmount * getRate();
+        return usdvAmount * getRate() / (10 ** 18);
     }
 
     /**
@@ -185,7 +192,7 @@ contract TwapOracle is Ownable {
         }
 
         // usdv price is disabled so true USD value of both Vader and USDV is taken into account.
-        return vaderAmount / getRate();
+        return vaderAmount * (10 ** 18) / getRate();
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -300,7 +307,12 @@ contract TwapOracle is Ownable {
             "TwapOracle::registerPair: No reserves"
         );
 
+        (price0CumulativeLast, price1CumulativeLast) = token0 < token1
+            ? (price0CumulativeLast, price1CumulativeLast)
+            : (price1CumulativeLast, price0CumulativeLast);
+
         _pairExists[keccak256(abi.encodePacked(token0, token1))] = true;
+        _pairExists[keccak256(abi.encodePacked(token1, token0))] = true;
 
         _pairs.push(
             PairData({
@@ -325,17 +337,23 @@ contract TwapOracle is Ownable {
         // Update all of the registered pairs in the TWAP oracle.
         for (uint256 i = 0; i < pairCount; i++) {
             PairData storage pairData = _pairs[i];
+            address _token0 = pairData.token0;
+            address _token1 = pairData.token1;
 
             // Get the current cumulative prices and block timestamp of the current pairing.
             (
                 uint256 price0Cumulative,
                 uint256 price1Cumulative,
                 uint32 blockTimestamp
-            ) = (pairData.token0 == VADER)
+            ) = (_token0 == VADER)
                     ? UniswapV2OracleLibrary.currentCumulativePrices(
                         pairData.pair
                     )
-                    : _vaderPool.cumulativePrices(IERC20(pairData.token1));
+                    : _vaderPool.cumulativePrices(IERC20(_token1));
+
+            (price0Cumulative, price1Cumulative) = _token0 < _token1
+                ? (price0Cumulative, price1Cumulative)
+                : (price1Cumulative, price0Cumulative);
 
             unchecked {
                 // Ensure that at least one full period has passed since the pairing was last update.

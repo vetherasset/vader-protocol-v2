@@ -149,7 +149,10 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         IConverter _converter,
         ILinearVesting _vest,
         IUSDV _usdv,
-        address dao
+        address dao,
+        // Note: Check if this is the right design choice to initiate team vesting from here?
+        address[] calldata vesters,
+        uint192[] calldata amounts
     ) external onlyOwner {
         require(
             _converter != IConverter(_ZERO_ADDRESS) &&
@@ -174,7 +177,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         _mint(address(_converter), _VETH_ALLOCATION);
         _mint(address(_vest), _TEAM_ALLOCATION);
 
-        _vest.begin();
+        _vest.begin(vesters, amounts);
         transferOwnership(dao);
 
         emit ProtocolInitialized(
