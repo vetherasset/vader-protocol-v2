@@ -89,7 +89,7 @@ contract BasePoolV2 is
     /*
      * @dev Initializes the contract by setting address of native asset.
      **/
-    constructor(IERC20 _nativeAsset) ERC721("Vader LP", "VLP") {
+    constructor(IERC20 _nativeAsset) ERC721("Vader-V1-POS", "VLP") {
         require(
             _nativeAsset != IERC20(_ZERO_ADDRESS),
             "BasePoolV2::constructor: Incorrect Arguments"

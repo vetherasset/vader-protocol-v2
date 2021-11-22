@@ -94,44 +94,6 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /**
-     * @dev Allows a user to claim their pending vesting amount.
-     *
-     * Emits a {Vested} event indicating the user who claimed their vested tokens
-     * as well as the amount that was vested.
-     *
-     * Requirements:
-     *
-     * - the vesting period has started
-     * - the caller must have a non-zero vested amount
-     */
-    //    function claim()
-    //        external
-    //        override
-    //        hasStarted
-    //        returns (uint256 vestedAmount)
-    //    {
-    //        Vester memory vester = vest[msg.sender];
-    //
-    //        require(
-    //            vester.start == 0,
-    //            "LinearVesting::claim: Incorrect Vesting Type"
-    //        );
-    //
-    //        vestedAmount = _getClaim(vester.amount, vester.lastClaim);
-    //
-    //        require(vestedAmount != 0, "LinearVesting::claim: Nothing to claim");
-    //
-    //        vester.amount -= uint192(vestedAmount);
-    //        vester.lastClaim = uint64(block.timestamp);
-    //
-    //        vest[msg.sender] = vester;
-    //
-    //        emit Vested(msg.sender, vestedAmount);
-    //
-    //        vader.transfer(msg.sender, vestedAmount);
-    //    }
-
-    /**
      * @dev Allows a user to claim their pending vesting amount of the vested claim
      *
      * Emits a {Vested} event indicating the user who claimed their vested tokens
@@ -272,56 +234,6 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
 
     /* ========== PRIVATE FUNCTIONS ========== */
 
-    /**
-     * @dev Calculates the amount a user's vest is due. To calculate,
-     * the following formula is utilized:
-     *
-     * - (remainingAmount * timeElapsed) / timeUntilEnd
-     *
-     * Each variable is described as follows:
-     *
-     * - remainingAmount (amount): Vesting amount remaining. Each claim subtracts from
-     * this amount to ensure calculations are properly conducted.
-     *
-     * - timeElapsed (block.timestamp.sub(lastClaim)): Time that has elapsed since the
-     * last claim.
-     *
-     * - timeUntilEnd (end.sub(lastClaim)): Time remaining for the particular vesting
-     * member's total duration.
-     *
-     * Vesting calculations are relative and always update the last
-     * claim timestamp as well as remaining amount whenever they
-     * are claimed.
-     */
-    //    function _getClaim(uint256 amount, uint256 lastClaim)
-    //        private
-    //        view
-    //        returns (uint256)
-    //    {
-    //        return _getClaim(amount, lastClaim, start, end);
-    //    }
-
-    /**
-     * @dev Calculates the amount a user's vest is due. To calculate,
-     * the following formula is utilized:
-     *
-     * - (remainingAmount * timeElapsed) / timeUntilEnd
-     *
-     * Each variable is described as follows:
-     *
-     * - remainingAmount (amount): Vesting amount remaining. Each claim subtracts from
-     * this amount to ensure calculations are properly conducted.
-     *
-     * - timeElapsed (block.timestamp.sub(lastClaim)): Time that has elapsed since the
-     * last claim.
-     *
-     * - timeUntilEnd (end.sub(lastClaim)): Time remaining for the particular vesting
-     * member's total duration.
-     *
-     * Vesting calculations are relative and always update the last
-     * claim timestamp as well as remaining amount whenever they
-     * are claimed.
-     */
     function _getClaim(
         uint256 amount,
         uint256 lastClaim,

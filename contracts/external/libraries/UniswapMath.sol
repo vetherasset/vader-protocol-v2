@@ -4,7 +4,7 @@ pragma solidity =0.8.9;
 
 // a library for performing various math operations
 
-library Math {
+library UniswapMath {
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x < y ? x : y;
     }

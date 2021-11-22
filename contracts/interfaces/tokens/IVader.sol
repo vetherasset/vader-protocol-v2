@@ -19,10 +19,10 @@ interface IVader {
 
     event ProtocolInitialized(
         address converter,
-        address vest,
-        address usdv,
-        address dao
+        address vest
     );
+
+    event USDVSet(address usdv);
 
     /* ========== DEPRECATED ========== */
 

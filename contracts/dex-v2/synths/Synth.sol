@@ -31,7 +31,7 @@ contract Synth is ISynth, ProtocolConstants, ERC20, Ownable {
         view
         returns (string memory)
     {
-        return _combine(token.symbol(), ".v");
+        return _combine(token.symbol(), ".s");
     }
 
     function _combine(string memory a, string memory b)

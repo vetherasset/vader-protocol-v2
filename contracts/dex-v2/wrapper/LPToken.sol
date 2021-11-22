@@ -16,7 +16,7 @@ contract LPToken is ILPToken, ProtocolConstants, ERC20, Ownable {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(IERC20Extended _foreignAsset, IVaderPoolV2 _pool)
-        ERC20(_calculateName(_foreignAsset), _calculateSymbol(_foreignAsset))
+        ERC20("VADER-V1", _calculateSymbol(_foreignAsset))
     {
         foreignAsset = _foreignAsset;
         pool = _pool;
@@ -32,14 +32,6 @@ contract LPToken is ILPToken, ProtocolConstants, ERC20, Ownable {
     function balanceOf(address user) public view override returns (uint256) {
         if (user == address(pool)) return totalSupply() - ERC20.totalSupply();
         else return ERC20.balanceOf(user);
-    }
-
-    function _calculateName(IERC20Extended token)
-        internal
-        view
-        returns (string memory)
-    {
-        return _combine(token.name(), " - USDV LP");
     }
 
     function _calculateSymbol(IERC20Extended token)

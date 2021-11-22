@@ -85,8 +85,6 @@ contract Converter is IConverter, ProtocolConstants {
      *
      * Also approves Vesting to spend Vader tokens on its behalf.
      *
-     * Requirements:
-     * - only owner can call it.
      **/
     function setVesting(ILinearVesting _vesting) external {
         require(
@@ -148,9 +146,8 @@ contract Converter is IConverter, ProtocolConstants {
 
         amount = amount > allowance ? allowance : amount;
 
-        uint256 balanceBefore = vether.balanceOf(_BURN);
+        // NOTE: FoT is ignored as units are meant to be burned anyway
         vether.transferFrom(msg.sender, _BURN, amount);
-        amount = vether.balanceOf(_BURN) - balanceBefore;
 
         vaderReceived = amount * _VADER_VETHER_CONVERSION_RATE;
 

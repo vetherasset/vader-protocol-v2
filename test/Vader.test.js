@@ -54,14 +54,13 @@ contract.only("Vader", (accounts) => {
 
     describe("component setup", () => {
         it("should disallow setting the components of Vader incorrectly", async () => {
-            const { vader, vesting, converter, usdv, ADMINISTRATOR } =
+            const { vader, vesting, converter, ADMINISTRATOR } =
                 await deployMock();
 
             await assertErrors(
                 vader.setComponents(
                     UNSET_ADDRESS,
                     vesting.address,
-                    usdv.address,
                     accounts.dao,
                     [accounts.account0],
                     [parseUnits(2_500_000_000, 18)],
@@ -72,19 +71,6 @@ contract.only("Vader", (accounts) => {
             await assertErrors(
                 vader.setComponents(
                     converter.address,
-                    UNSET_ADDRESS,
-                    usdv.address,
-                    accounts.dao,
-                    [accounts.account0],
-                    [parseUnits(2_500_000_000, 18)],
-                    ADMINISTRATOR
-                ),
-                "Vader::setComponents: Incorrect Arguments"
-            );
-            await assertErrors(
-                vader.setComponents(
-                    converter.address,
-                    vesting.address,
                     UNSET_ADDRESS,
                     accounts.dao,
                     [accounts.account0],
@@ -96,13 +82,12 @@ contract.only("Vader", (accounts) => {
         });
 
         it("should disallow the components to be set from anyone other than the owner", async () => {
-            const { vader, vesting, converter, usdv } = await deployMock();
+            const { vader, vesting, converter } = await deployMock();
 
             await assertErrors(
                 vader.setComponents(
                     converter.address,
                     vesting.address,
-                    usdv.address,
                     accounts.dao,
                     [accounts.account0],
                     [parseUnits(2_500_000_000, 18)]
@@ -112,14 +97,13 @@ contract.only("Vader", (accounts) => {
         });
 
         it("should allow the components to be set properly by the contract owner", async () => {
-            const { vader, vesting, converter, usdv, ADMINISTRATOR } =
+            const { vader, vesting, converter, ADMINISTRATOR } =
                 await deployMock();
 
             assertEvents(
                 await vader.setComponents(
                     converter.address,
                     vesting.address,
-                    usdv.address,
                     accounts.dao,
                     [accounts.account0],
                     [parseUnits(2_500_000_000, 18)],
@@ -129,7 +113,6 @@ contract.only("Vader", (accounts) => {
                     ProtocolInitialized: {
                         converter: converter.address,
                         vest: vesting.address,
-                        usdv: usdv.address,
                         dao: accounts.dao,
                     },
                 }
@@ -140,27 +123,65 @@ contract.only("Vader", (accounts) => {
             assert.equal(await vader.owner(), accounts.dao);
             assert.equal(await vader.converter(), converter.address);
             assert.equal(await vader.vest(), vesting.address);
-            assert.equal(await vader.usdv(), usdv.address);
 
             assertBn(await vader.balanceOf(converter.address), VETH_ALLOCATION);
             assertBn(await vader.balanceOf(vesting.address), TEAM_ALLOCATION);
         });
 
         it("should disallow re-setting the components by the new owner (dao)", async () => {
-            const { vader, vesting, converter, usdv, FAKE_DAO } =
-                await deployMock();
+            const { vader, vesting, converter, FAKE_DAO } = await deployMock();
 
             await assertErrors(
                 vader.setComponents(
                     converter.address,
                     vesting.address,
-                    usdv.address,
                     accounts.account3,
                     [accounts.account0],
                     [parseUnits(2_500_000_000, 18)],
                     FAKE_DAO
                 ),
                 "Vader::setComponents: Already Set"
+            );
+        });
+    });
+
+    describe("set USDV", () => {
+        it("should disallow setting USDV incorrectly", async () => {
+            const { vader, FAKE_DAO } = await deployMock();
+
+            await assertErrors(
+                vader.setUSDV(UNSET_ADDRESS, FAKE_DAO),
+                "Vader::setUSDV: Invalid USDV address"
+            );
+        });
+
+        it("should disallow USDV to be set from anyone other than the owner", async () => {
+            const { vader, usdv } = await deployMock();
+
+            await assertErrors(
+                vader.setUSDV(usdv.address),
+                "Ownable: caller is not the owner"
+            );
+        });
+
+        it("should allow the USDV to be set properly by the contract owner", async () => {
+            const { vader, usdv, FAKE_DAO } = await deployMock();
+
+            assertEvents(await vader.setUSDV(usdv.address, FAKE_DAO), {
+                USDVSet: {
+                    usdv: usdv.address,
+                },
+            });
+
+            assert.equal(await vader.usdv(), usdv.address);
+        });
+
+        it("should disallow re-setting the USDV by the new owner (dao)", async () => {
+            const { vader, usdv, FAKE_DAO } = await deployMock();
+
+            await assertErrors(
+                vader.setUSDV(usdv.address, FAKE_DAO),
+                "USDV already set"
             );
         });
     });
@@ -185,14 +206,13 @@ contract.only("Vader", (accounts) => {
         });
 
         it("should allow the maximum supply to be changed by the DAO", async () => {
-            const { vader, FAKE_DAO, converter, vesting, usdv, ADMINISTRATOR } =
+            const { vader, FAKE_DAO, converter, vesting, ADMINISTRATOR } =
                 await deployMock();
 
             const { INITIAL_VADER_SUPPLY, TEAM_ALLOCATION } = PROJECT_CONSTANTS;
             await vader.setComponents(
                 converter.address,
                 vesting.address,
-                usdv.address,
                 accounts.dao,
                 [accounts.account0],
                 [TEAM_ALLOCATION],
