@@ -28,6 +28,9 @@ abstract contract ProtocolConstants {
     // Ecosystem growth fund unlocked for partnerships & USDV provision
     uint256 internal constant _ECOSYSTEM_GROWTH = 2_500_000_000 * 1 ether;
 
+    // Total grant tokens
+    uint256 internal constant _GRANT_ALLOCATION = 12_500_000_000 * 1 ether;
+
     // Emission Era
     uint256 internal constant _EMISSION_ERA = 24 hours;
 

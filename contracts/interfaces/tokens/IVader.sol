@@ -7,15 +7,6 @@ interface IVader {
 
     function createEmission(address user, uint256 amount) external;
 
-    function calculateFee() external view returns (uint256 basisPoints);
-
-    function getCurrentEraEmission() external view returns (uint256);
-
-    function getEraEmission(uint256 currentSupply)
-        external
-        view
-        returns (uint256);
-
     /* ========== EVENTS ========== */
 
     event Emission(address to, uint256 amount);
@@ -32,4 +23,15 @@ interface IVader {
         address usdv,
         address dao
     );
+
+    /* ========== DEPRECATED ========== */
+
+    // function getCurrentEraEmission() external view returns (uint256);
+
+    // function getEraEmission(uint256 currentSupply)
+    //     external
+    //     view
+    //     returns (uint256);
+
+    // function calculateFee() external view returns (uint256 basisPoints);
 }

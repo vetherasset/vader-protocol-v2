@@ -40,17 +40,8 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     // The USDV contract, used to apply proper access control
     IUSDV public usdv;
 
-    // The adjustable emission curve of the protocol, used as a divisor
-    uint256 public emissionCurve = _INITIAL_EMISSION_CURVE;
-
-    // The last emission's timestamp expressed in seconds
-    uint256 public lastEmission = block.timestamp;
-
-    // The initial maximum supply of the token, equivalent to 2.5 bn units
+    // The initial maximum supply of the token, equivalent to 25 bn units
     uint256 public maxSupply = _INITIAL_VADER_SUPPLY;
-
-    // A list of addresses that do not have a tax applied to them, used for system components
-    mapping(address => bool) public untaxed;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -76,42 +67,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * the converter and vesting contract are not known on deployment.
      */
     constructor() ERC20("Vader", "VADER") {
-        _mint(address(this), _ECOSYSTEM_GROWTH);
-    }
-
-    /* ========== VIEWS ========== */
-
-    /**
-     * @dev Returns the current fee that the protocol applies to transactions. The fee
-     * organically adjusts itself as the actual total supply of the token fluctuates and
-     * will always hold a value between [0%, 1%] expressed in basis points.
-     */
-    function calculateFee() public view override returns (uint256 basisPoints) {
-        basisPoints = (_MAX_FEE_BASIS_POINTS * totalSupply()) / maxSupply;
-    }
-
-    /**
-     * @dev Returns the current era's emission based on the existing total supply of the
-     * token. The era emissions diminish as the total supply of the token increases, inching
-     * closer to 0 as the total supply reaches its cap.
-     */
-    function getCurrentEraEmission() external view override returns (uint256) {
-        return getEraEmission(totalSupply());
-    }
-
-    /**
-     * @dev Calculates and returns the constantly diminishing era emission based on the difference between
-     * the current and maximum supply spread over a one year based in on the emission's era duration.
-     */
-    function getEraEmission(uint256 currentSupply)
-        public
-        view
-        override
-        returns (uint256)
-    {
-        return
-            ((maxSupply - currentSupply) / emissionCurve) /
-            (_ONE_YEAR / _EMISSION_ERA);
+        _mint(address(this), _GRANT_ALLOCATION);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -127,7 +83,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         override
         onlyOwner
     {
-        _mint(user, amount);
+        _transfer(address(this), user, amount);
         emit Emission(user, amount);
     }
 
@@ -150,7 +106,6 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         ILinearVesting _vest,
         IUSDV _usdv,
         address dao,
-        // Note: Check if this is the right design choice to initiate team vesting from here?
         address[] calldata vesters,
         uint192[] calldata amounts
     ) external onlyOwner {
@@ -158,7 +113,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
             _converter != IConverter(_ZERO_ADDRESS) &&
                 _vest != ILinearVesting(_ZERO_ADDRESS) &&
                 _usdv != IUSDV(_ZERO_ADDRESS) &&
-                dao != _ZERO_ADDRESS,
+                dao != owner(),
             "Vader::setComponents: Incorrect Arguments"
         );
         require(
@@ -170,9 +125,9 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         vest = _vest;
         usdv = _usdv;
 
-        untaxed[address(_converter)] = true;
-        untaxed[address(_vest)] = true;
-        untaxed[address(_usdv)] = true;
+        // untaxed[address(_converter)] = true;
+        // untaxed[address(_vest)] = true;
+        // untaxed[address(_usdv)] = true;
 
         _mint(address(_converter), _VETH_ALLOCATION);
         _mint(address(_vest), _TEAM_ALLOCATION);
@@ -215,7 +170,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * Requirements:
      *
      * - the caller must be the DAO
-     * - the new maximum supply must be greater than the current one
+     * - the new maximum supply must be greater than the current supply
      */
     function adjustMaxSupply(uint256 _maxSupply) external onlyDAO {
         require(
@@ -246,29 +201,6 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         // _syncEmissions();
     }
 
-    /**
-     * @dev Overrides the existing ERC-20 {_transfer} functionality to apply a fee on each
-     * transfer.
-     */
-    function _transfer(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) internal override {
-        if (untaxed[msg.sender])
-            return ERC20._transfer(sender, recipient, amount);
-
-        uint256 fee = calculateFee();
-
-        uint256 tax = (amount * fee) / _MAX_BASIS_POINTS;
-
-        amount -= tax;
-
-        _burn(sender, tax);
-
-        ERC20._transfer(sender, recipient, amount);
-    }
-
     /* ========== PRIVATE FUNCTIONS ========== */
 
     /**
@@ -297,6 +229,9 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     }
 
     /* ========== DEPRECATED FUNCTIONS ========== */
+
+    // The last emission's timestamp expressed in seconds
+    // uint256 public lastEmission = block.timestamp;
 
     /**
      * @dev Allows the daily emission curve of the token to be adjusted.
@@ -334,7 +269,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
 
     //         // NOTE: Current Supply + Emission guaranteed to not overflow as <= maxSupply
     //         uint256 emission;
-    //         for (uint256 i = 0; i < eras; i++)
+    //         for (uint256 i = 0; i < eras; ++i)
     //             emission += getEraEmission(currentSupply + emission);
 
     //         _mint(address(usdv), emission);
@@ -346,5 +281,69 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
 
     //         emit Emission(emission, _lastEmission);
     //     }
+    // }
+
+    // The adjustable emission curve of the protocol, used as a divisor
+    // uint256 public emissionCurve = _INITIAL_EMISSION_CURVE;
+
+    /**
+     * @dev Returns the current era's emission based on the existing total supply of the
+     * token. The era emissions diminish as the total supply of the token increases, inching
+     * closer to 0 as the total supply reaches its cap.
+     */
+    // function getCurrentEraEmission() external view override returns (uint256) {
+    //     return getEraEmission(totalSupply());
+    // }
+
+    /**
+     * @dev Calculates and returns the constantly diminishing era emission based on the difference between
+     * the current and maximum supply spread over a one year based in on the emission's era duration.
+     */
+    // function getEraEmission(uint256 currentSupply)
+    //     public
+    //     view
+    //     override
+    //     returns (uint256)
+    // {
+    //     return
+    //         ((maxSupply - currentSupply) / emissionCurve) /
+    //         (_ONE_YEAR / _EMISSION_ERA);
+    // }
+
+    // A list of addresses that do not have a tax applied to them, used for system components
+    // mapping(address => bool) public untaxed;
+
+    /**
+     * @dev Returns the current fee that the protocol applies to transactions. The fee
+     * organically adjusts itself as the actual total supply of the token fluctuates and
+     * will always hold a value between [0%, 1%] expressed in basis points.
+     */
+    // function calculateFee() public view override returns (uint256 basisPoints) {
+    //     basisPoints = (_MAX_FEE_BASIS_POINTS * totalSupply()) / maxSupply;
+    // }
+
+    /**
+     * @dev Overrides the existing ERC-20 {_transfer} functionality to apply a fee on each
+     * transfer.
+     */
+    // function _transfer(
+    //     address sender,
+    //     address recipient,
+    //     uint256 amount
+    // ) internal override {
+    //     if (untaxed[_msgSender()])
+    //         return ERC20._transfer(sender, recipient, amount);
+
+    //     uint256 fee = calculateFee();
+
+    //     uint256 tax = (amount * fee) / _MAX_BASIS_POINTS;
+
+    //     unchecked {
+    //         amount -= tax;
+    //     }
+
+    //     _burn(sender, tax);
+
+    //     ERC20._transfer(sender, recipient, amount);
     // }
 }

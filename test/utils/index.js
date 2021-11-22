@@ -2,9 +2,6 @@ const {
     time, // Time support with custom block timeouts
 } = require("@openzeppelin/test-helpers");
 
-const { MerkleTree } = require("merkletreejs");
-const SHA256 = require("crypto-js/sha256");
-
 module.exports = (artifacts) => {
     // Mocks
     const MockToken = artifacts.require("MockToken");
@@ -15,6 +12,7 @@ module.exports = (artifacts) => {
     const MockAggregatorV3 = artifacts.require("MockAggregatorV3");
     const MockUniswapV2Factory = artifacts.require("MockUniswapV2Factory");
     const MockUniswapV2Router = artifacts.require("MockUniswapV2Router");
+    const MockMTree = artifacts.require("MockMTree");
 
     // Project Contracts
     const Vader = artifacts.require("Vader");
@@ -44,12 +42,6 @@ module.exports = (artifacts) => {
     // const UniswapV2Library = artifacts.require("UniswapV2Library");
 
     // Generic Utilities
-    const root = () => {
-        const leaves = ["a", "b", "c"].map((x) => SHA256(x));
-        const tree = new MerkleTree(leaves, SHA256);
-        const root = tree.getRoot().toString("hex");
-        return "0x" + root;
-    };
 
     const big = (n) => web3.utils.toBN(n);
 
@@ -199,18 +191,22 @@ module.exports = (artifacts) => {
         VaderPoolFactory: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
         VaderRouter: (_, { factory }) => [factory.address],
         VaderReserve: (_, { vader }) => [vader.address],
-        USDV: (_, { vader, reserve }) => [vader.address, reserve.address],
-        LinearVesting: ({ account0 }, { vader, ADMINISTRATOR }) => [
+        USDV: (_, { vader, reserve, ADMINISTRATOR }) => [
             vader.address,
-            [account0],
-            [PROJECT_CONSTANTS.TEAM_ALLOCATION],
+            reserve.address,
             ADMINISTRATOR,
         ],
-        Converter: (_, { vader, vether, vesting }) => [
+        Converter: (_, { vader, vether, ADMINISTRATOR }) => [
             vether.address,
             vader.address,
-            vesting.address,
-            root(),
+            "0xa940602589189f10b3011b6a878649093c3d87a8a26751a52f10e44ca75e7ba1",
+            123, // salt
+            ADMINISTRATOR,
+        ],
+        LinearVesting: (_, { vader, converter, ADMINISTRATOR }) => [
+            vader.address,
+            converter.address,
+            ADMINISTRATOR,
         ],
         GovernorAlpha: ({ account0, account1 }, { mockXVader }) => [
             account0,
@@ -331,12 +327,12 @@ module.exports = (artifacts) => {
 
         cached.usdv = await USDV.new(...configs.USDV(accounts, cached));
 
-        cached.vesting = await LinearVesting.new(
-            ...configs.LinearVesting(accounts, cached)
-        );
-
         cached.converter = await Converter.new(
             ...configs.Converter(accounts, cached)
+        );
+
+        cached.vesting = await LinearVesting.new(
+            ...configs.LinearVesting(accounts, cached)
         );
 
         cached.mockXVader = await MockXVader.new(
@@ -375,6 +371,8 @@ module.exports = (artifacts) => {
         cached.mockUniswapV2Router = await MockUniswapV2Router.new(
             ...configs.MockUniswapV2Router(accounts, cached)
         );
+
+        cached.mockMTree = await MockMTree.new();
 
         return cached;
     };

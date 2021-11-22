@@ -31,6 +31,9 @@
         "truffle": "^5.4.16"
     },
     "devDependencies": {
+        "ethers": "^5.5.1",
+        "keccak256": "^1.0.3",
+        "merkletreejs": "^0.2.24",
         "eth-gas-reporter": "^0.2.22",
         "truffle-plugin-verify": "^0.5.15"
     }

@@ -3,7 +3,7 @@
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import "../../shared/ProtocolConstants.sol";
@@ -38,10 +38,13 @@ contract Converter is IConverter, ProtocolConstants {
     IERC20 public immutable vader;
 
     // The VADER vesting contract
-    ILinearVesting public immutable vesting;
+    ILinearVesting public vesting;
 
     // The merkle proof root for validating claims
     bytes32 public immutable root;
+
+    // Unique deployment salt
+    uint256 public immutable salt;
 
     // Signals whether a particular leaf has been claimed of the merkle proof
     mapping(bytes32 => bool) public claimed;
@@ -57,23 +60,45 @@ contract Converter is IConverter, ProtocolConstants {
     constructor(
         IERC20 _vether,
         IERC20 _vader,
-        ILinearVesting _vesting,
-        bytes32 _root
+        bytes32 _root,
+        uint256 _salt
     ) {
         require(
-            _vether != IERC20(_ZERO_ADDRESS) &&
-                _vader != IERC20(_ZERO_ADDRESS) &&
-                _vesting != ILinearVesting(_ZERO_ADDRESS),
+            _vether != IERC20(_ZERO_ADDRESS) && _vader != IERC20(_ZERO_ADDRESS),
             "Converter::constructor: Misconfiguration"
         );
 
         vether = _vether;
         vader = _vader;
 
-        _vader.approve(address(_vesting), type(uint256).max);
-
-        vesting = _vesting;
         root = _root;
+        salt = _salt;
+    }
+
+    /* ========== RESTRICTED FUNCTIONS ========== */
+
+    /*
+     * @dev Sets address of vesting contract.
+     *
+     * The LinearVesting and Converter contracts are dependent upon
+     * eachother, hence this setter is introduced.
+     *
+     * Also approves Vesting to spend Vader tokens on its behalf.
+     *
+     * Requirements:
+     * - only owner can call it.
+     **/
+    function setVesting(ILinearVesting _vesting) external {
+        require(
+            vesting == ILinearVesting(_ZERO_ADDRESS),
+            "Converter::setVesting: Vesting is already set"
+        );
+        require(
+            _vesting != ILinearVesting(_ZERO_ADDRESS),
+            "Converter::setVesting: Cannot Set Zero Vesting Address"
+        );
+        vader.approve(address(_vesting), type(uint256).max);
+        vesting = _vesting;
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -103,13 +128,15 @@ contract Converter is IConverter, ProtocolConstants {
             "Converter::convert: Non-Zero Conversion Amount Required"
         );
 
+        ILinearVesting _vesting = vesting;
+
+        require(
+            _vesting != ILinearVesting(_ZERO_ADDRESS),
+            "Converter::convert: Vesting is not set"
+        );
+
         bytes32 leaf = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                amount,
-                address(this),
-                getChainId()
-            )
+            abi.encodePacked(msg.sender, amount, salt, getChainId())
         );
         require(
             !claimed[leaf] && proof.verify(root, leaf),
@@ -117,9 +144,13 @@ contract Converter is IConverter, ProtocolConstants {
         );
         claimed[leaf] = true;
 
-        uint256 balanceBefore = vether.balanceOf(address(this));
+        uint256 allowance = vether.allowance(msg.sender, address(this));
+
+        amount = amount > allowance ? allowance : amount;
+
+        uint256 balanceBefore = vether.balanceOf(_BURN);
         vether.transferFrom(msg.sender, _BURN, amount);
-        amount = vether.balanceOf(address(this)) - balanceBefore;
+        amount = vether.balanceOf(_BURN) - balanceBefore;
 
         vaderReceived = amount * _VADER_VETHER_CONVERSION_RATE;
 
@@ -127,19 +158,14 @@ contract Converter is IConverter, ProtocolConstants {
 
         uint256 half = vaderReceived / 2;
         vader.transfer(msg.sender, half);
-        vesting.vestFor(msg.sender, vaderReceived - half);
+        _vesting.vestFor(msg.sender, vaderReceived - half);
     }
 
     /* ========== INTERNAL FUNCTIONS ========== */
     /*
      * @dev Returns the {chainId} of current network.
      **/
-    function getChainId()
-        internal
-        view
-        returns
-        (uint256 chainId)
-    {
+    function getChainId() internal view returns (uint256 chainId) {
         assembly {
             chainId := chainid()
         }

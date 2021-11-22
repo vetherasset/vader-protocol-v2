@@ -11,12 +11,15 @@ contract MockConstants is ProtocolConstants {
     // Allocation for VETH holders
     uint256 public constant VETH_ALLOCATION = _VETH_ALLOCATION;
 
-    // Vader -> Vether Conversion Rate (1000:1)
+    // Vader -> Vether Conversion Rate (10000:1)
     uint256 public constant VADER_VETHER_CONVERSION_RATE =
         _VADER_VETHER_CONVERSION_RATE;
 
     // Team allocation vested over {VESTING_DURATION} years
     uint256 public constant TEAM_ALLOCATION = _TEAM_ALLOCATION;
+
+    // Total grant tokens
+    uint256 public constant GRANT_ALLOCATION = _GRANT_ALLOCATION;
 
     // Ecosystem growth fund unlocked for partnerships & USDV provision
     uint256 public constant ECOSYSTEM_GROWTH = _ECOSYSTEM_GROWTH;

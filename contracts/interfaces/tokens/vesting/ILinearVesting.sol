@@ -15,22 +15,25 @@ interface ILinearVesting {
 
     /* ========== FUNCTIONS ========== */
 
-    function getClaim(address _vester) external view returns (uint256 vestedAmount);
+    function getClaim(address _vester)
+        external
+        view
+        returns (uint256 vestedAmount);
 
     function claim() external returns (uint256 vestedAmount);
 
-//    function claimConverted() external returns (uint256 vestedAmount);
+    //    function claimConverted() external returns (uint256 vestedAmount);
 
-    function begin(
-        address[] calldata vesters,
-        uint192[] calldata amounts
-    ) external;
+    function begin(address[] calldata vesters, uint192[] calldata amounts)
+        external;
 
     function vestFor(address user, uint256 amount) external;
 
     /* ========== EVENTS ========== */
 
     event VestingInitialized(uint256 duration);
+
+    event VestingCreated(address user, uint256 amount);
 
     event Vested(address indexed from, uint256 amount);
 }

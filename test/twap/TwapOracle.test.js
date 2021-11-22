@@ -26,7 +26,7 @@ const {
     UniswapV2Pair,
 } = require("../utils")(artifacts);
 
-contract.only("Twap Oracle", (accounts) => {
+contract("Twap Oracle", (accounts) => {
     describe("construction", () => {
         it("should construct the twap", async () => {
             if (Array.isArray(accounts))
@@ -80,7 +80,10 @@ contract.only("Twap Oracle", (accounts) => {
         it("should not allow to register when already exists", async () => {
             const { twap, mockUsdv } = await deployMock();
 
-            const USDVAggregator = await MockAggregatorV3.new(mockUsdv.address, parseUnits(1, 8));
+            const USDVAggregator = await MockAggregatorV3.new(
+                mockUsdv.address,
+                parseUnits(1, 8)
+            );
 
             await twap.registerAggregator(
                 mockUsdv.address,
@@ -197,7 +200,10 @@ contract.only("Twap Oracle", (accounts) => {
             // ========================
 
             // ====== Setup Uniswap pool Vader <-> USDV and add liquidity ======
-            await mockUniswapV2Factory.createPair(token.address, mockUsdv.address);
+            await mockUniswapV2Factory.createPair(
+                token.address,
+                mockUsdv.address
+            );
 
             const uniswapPairAddress = await mockUniswapV2Factory.getPair(
                 token.address,
@@ -253,17 +259,16 @@ contract.only("Twap Oracle", (accounts) => {
 
             // Setup aggregators where mock prices where 1 USDV = $1 and 1 Vader = $2
             const usdvAggregator = await MockAggregatorV3.new(
-                mockUsdv.address, parseUnits(1, 8)
+                mockUsdv.address,
+                parseUnits(1, 8)
             );
             const vaderAggregator = await MockAggregatorV3.new(
-                token.address, parseUnits(2, 8)
+                token.address,
+                parseUnits(2, 8)
             );
 
             // Register the mock aggregators
-            await twap.registerAggregator(
-                dai.address,
-                usdvAggregator.address
-            );
+            await twap.registerAggregator(dai.address, usdvAggregator.address);
             await twap.registerAggregator(
                 mockUsdv.address,
                 vaderAggregator.address
@@ -277,7 +282,7 @@ contract.only("Twap Oracle", (accounts) => {
             // expectedRate is Vader against 1 USDV
             const expectedRate = (await usdvAggregator.mockPrice())
                 .mul(big(10).pow(big(18)))
-                .div((await vaderAggregator.mockPrice()));
+                .div(await vaderAggregator.mockPrice());
 
             const sourceAmount = parseUnits(10, 18);
             const expectedUSDVFromVader = sourceAmount
@@ -288,9 +293,15 @@ contract.only("Twap Oracle", (accounts) => {
                 .mul(expectedRate)
                 .div(big(10).pow(big(18)));
 
-            assertBn((await twap.getRate()), expectedRate);
-            assertBn((await twap.usdvtoVader(sourceAmount)), expectedVaderFromUSDV);
-            assertBn((await twap.vaderToUsdv(sourceAmount)), expectedUSDVFromVader);
+            assertBn(await twap.getRate(), expectedRate);
+            assertBn(
+                await twap.usdvtoVader(sourceAmount),
+                expectedVaderFromUSDV
+            );
+            assertBn(
+                await twap.vaderToUsdv(sourceAmount),
+                expectedUSDVFromVader
+            );
         });
     });
 
