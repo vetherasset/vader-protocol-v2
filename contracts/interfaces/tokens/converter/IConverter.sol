@@ -5,7 +5,7 @@ pragma solidity =0.8.9;
 interface IConverter {
     /* ========== FUNCTIONS ========== */
 
-    function convert(bytes32[] calldata proof, uint256 amount)
+    function convert(bytes32[] calldata proof, uint256 amount, uint256 minVader)
         external
         returns (uint256 vaderReceived);
 
