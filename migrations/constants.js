@@ -18,6 +18,11 @@ const CONVERTER_SALTS = {
     kovan: 28516565,
 };
 
+const CONVERTER = {
+    main: "",
+    kovan: "0x8A313Fa0cb3ed92bE4Cae3a4deF7C32c78181E09",
+};
+
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 module.exports = {
@@ -26,4 +31,5 @@ module.exports = {
     VADER,
     MERKLE_ROOTS,
     CONVERTER_SALTS,
+    CONVERTER,
 };
