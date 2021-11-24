@@ -116,7 +116,7 @@ contract Converter is IConverter, ProtocolConstants {
      * - the amount specified is non-zero
      * - the contract has been supplied with the necessary Vader amount to fulfill the trade
      */
-    function convert(bytes32[] calldata proof, uint256 amount)
+    function convert(bytes32[] calldata proof, uint256 amount, uint256 minVader)
         external
         override
         returns (uint256 vaderReceived)
@@ -150,6 +150,7 @@ contract Converter is IConverter, ProtocolConstants {
         vether.transferFrom(msg.sender, _BURN, amount);
 
         vaderReceived = amount * _VADER_VETHER_CONVERSION_RATE;
+        require(vaderReceived >= minVader, "Converter::convert: Vader < min");
 
         emit Conversion(msg.sender, amount, vaderReceived);
 
