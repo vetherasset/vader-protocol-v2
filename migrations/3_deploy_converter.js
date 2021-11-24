@@ -1,16 +1,17 @@
-const { VETHER } = require("./constants");
+const { VETHER, VADER, MERKLE_ROOTS, CONVERTER_SALTS } = require("./constants");
 
-const Vader = artifacts.require("Vader");
 const Converter = artifacts.require("Converter");
 
 module.exports = async function (deployer, network) {
     // skip development
     if (network == "development") {
-        return
+        return;
     }
 
     const vether = VETHER[network];
-    const vader = await Vader.deployed();
+    const vader = VADER[network];
+    const root = MERKLE_ROOTS[network];
+    const salt = CONVERTER_SALTS[network];
 
-    await deployer.deploy(Converter, vether, vader.address);
+    await deployer.deploy(Converter, vether, vader, root, salt);
 };

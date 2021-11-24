@@ -70,7 +70,7 @@ module.exports = {
             provider: () =>
                 new HDWalletProvider(
                     mnemonic,
-                    `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`
+                    `wss://kovan.infura.io/ws/v3/${process.env.INFURA_API_KEY}`
                 ),
             network_id: 42,
             gas: 5500000,
@@ -89,7 +89,7 @@ module.exports = {
     // Set default mocha options here, use special reporters etc.
     mocha: {
         // timeout: 100000
-        reporter: "eth-gas-reporter"
+        reporter: "eth-gas-reporter",
     },
 
     // Configure your compilers
