@@ -32,10 +32,13 @@ npx truffle run verify MyContract --network kovan
 
 ### Kovan
 
--   Vether: [0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303](https://kovan.etherscan.io/address/0x2393409067d2F2e4Ce072aB17e2D55B7f4f36303)
--   Vader: [0x4ad25191285440992981B5B840F164b026bCE2A8](https://kovan.etherscan.io/address/0x4ad25191285440992981B5B840F164b026bCE2A8)
--   Converter: [0x49CD0e2C632FBb9765520798a93272BeB44278bC](https://kovan.etherscan.io/address/0x49CD0e2C632FBb9765520798a93272BeB44278bC)
--   LinearVesting: [0x54f208B5fF23F87c26d139Cbc410ECaA8d28360C](https://kovan.etherscan.io/address/0x54f208B5fF23F87c26d139Cbc410ECaA8d28360C)
+-   Vether: [0x87D96b9f386d70C72fD7DBcE5a3d2a7D3321446d](https://kovan.etherscan.io/address/0x87D96b9f386d70C72fD7DBcE5a3d2a7D3321446d)
+-   Vader: [0xcCb3AeF7Baa506e2D05193e38e88459F68AC1a8F](https://kovan.etherscan.io/address/0xcCb3AeF7Baa506e2D05193e38e88459F68AC1a8F)
+-   Converter: [0x8A313Fa0cb3ed92bE4Cae3a4deF7C32c78181E09](https://kovan.etherscan.io/address/0x8A313Fa0cb3ed92bE4Cae3a4deF7C32c78181E09)
+-   LinearVesting: [0xDaA4B82D5Bdd315a3191B080E26ff7A88eb8034E](https://kovan.etherscan.io/address/0xDaA4B82D5Bdd315a3191B080E26ff7A88eb8034E)
+
+---
+
 -   VaderReserve: [0xd3d6e14150530105ef7873D860BEc97F75a4F369](https://kovan.etherscan.io/address/0xd3d6e14150530105ef7873D860BEc97F75a4F369)
 -   USDV: [0xfd87ba583bd2071713fb5CB12086536a26eec18e](https://kovan.etherscan.io/address/0xfd87ba583bd2071713fb5CB12086536a26eec18e)
 
