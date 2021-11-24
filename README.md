@@ -1,10 +1,8 @@
-# vader-monorepo
+# vader-protocol-v2
 
-The Vader monorepo (internal)
+![vader](./doc/vader.png)
 
 ## Setup
-
-Node version that should be utilized is 12.16.2, other versions can show unwarranted errors. For Node.JS version management, `nvm` is recommended.
 
 ```shell
 npm i
