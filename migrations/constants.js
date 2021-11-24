@@ -23,6 +23,11 @@ const CONVERTER = {
     kovan: "0x8A313Fa0cb3ed92bE4Cae3a4deF7C32c78181E09",
 };
 
+const VESTING = {
+    main: "",
+    kovan: "0xDaA4B82D5Bdd315a3191B080E26ff7A88eb8034E",
+};
+
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 module.exports = {
@@ -32,4 +37,5 @@ module.exports = {
     MERKLE_ROOTS,
     CONVERTER_SALTS,
     CONVERTER,
+    VESTING,
 };
