@@ -219,7 +219,7 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
         );
         require(
             vest[user].amount == 0,
-            "LinearVesting::selfVest: Already a vester"
+            "LinearVesting::vestFor: Already a vester"
         );
         vest[user] = Vester(
             uint192(amount),

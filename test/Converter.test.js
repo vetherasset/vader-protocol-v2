@@ -92,7 +92,6 @@ contract.only("Converter", (accounts) => {
             await vader.setComponents(
                 converter.address,
                 vesting.address,
-                accounts.dao,
                 [accounts.account0],
                 [TEAM_ALLOCATION],
                 ADMINISTRATOR
@@ -160,7 +159,6 @@ contract.only("Converter", (accounts) => {
             await vader.setComponents(
                 converter.address,
                 vesting.address,
-                accounts.dao,
                 [accounts.account1],
                 [TEAM_ALLOCATION],
                 ADMINISTRATOR
