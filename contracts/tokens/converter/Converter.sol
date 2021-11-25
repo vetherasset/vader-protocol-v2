@@ -23,7 +23,7 @@ import "../../interfaces/tokens/vesting/ILinearVesting.sol";
  * Vader tokens and will fail to execute trades if it has not been
  * done so yet.
  */
-contract Converter is IConverter, ProtocolConstants {
+contract Converter is IConverter, ProtocolConstants, Ownable {
     /* ========== LIBRARIES ========== */
 
     // Using MerkleProof for validating claims
@@ -81,12 +81,12 @@ contract Converter is IConverter, ProtocolConstants {
      * @dev Sets address of vesting contract.
      *
      * The LinearVesting and Converter contracts are dependent upon
-     * eachother, hence this setter is introduced.
+     * each other, hence this setter is introduced.
      *
      * Also approves Vesting to spend Vader tokens on its behalf.
      *
      **/
-    function setVesting(ILinearVesting _vesting) external {
+    function setVesting(ILinearVesting _vesting) external onlyOwner {
         require(
             vesting == ILinearVesting(_ZERO_ADDRESS),
             "Converter::setVesting: Vesting is already set"

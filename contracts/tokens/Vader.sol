@@ -18,7 +18,7 @@ import "../interfaces/tokens/converter/IConverter.sol";
  * The Vader token that acts as the backbone of the Vader protocol,
  * burned and minted to mint and burn USDV tokens respectively.
  *
- * The token has a fixed initial supply at 25 billion units that is meant to then 
+ * The token has a fixed initial supply at 25 billion units that is meant to then
  * fluctuate depending on the amount of USDV minted into and burned from circulation.
  *
  * Emissions are initially controlled by the Vader team and then will be governed
@@ -82,8 +82,8 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     /**
-     * @dev Sets the initial {converter} and {vest} contract addresses. Additionally, mints 
-     * the Vader amount available for conversion as well as the team allocation that is meant 
+     * @dev Sets the initial {converter} and {vest} contract addresses. Additionally, mints
+     * the Vader amount available for conversion as well as the team allocation that is meant
      * to be vested to each respective contract.
      *
      * Emits a {ProtocolInitialized} event indicating all the supplied values of the function.
@@ -156,7 +156,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     function claimGrant(address beneficiary, uint256 amount) external onlyOwner {
         require(amount != 0, "Vader::claimGrant: Non-Zero Amount Required");
         emit GrantClaimed(beneficiary, amount);
-        ERC20._transfer(address(this), beneficiary, amount);
+        _transfer(address(this), beneficiary, amount);
     }
 
     /**
@@ -178,7 +178,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         emit MaxSupplyChanged(maxSupply, _maxSupply);
         maxSupply = _maxSupply;
     }
-    
+
     /**
      * @dev Allows the USDV token to perform mints of VADER tokens
      *
@@ -196,7 +196,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
         );
         _mint(_user, _amount);
     }
-    
+
     /**
      * @dev Allows the USDV token to perform burns of VADER tokens
      *
@@ -214,24 +214,20 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
     /* ========== INTERNAL FUNCTIONS ========== */
 
     /* ========== PRIVATE FUNCTIONS ========== */
-    
+
     /**
      * @dev Ensures only the USDV is able to invoke a particular function by validating that the
      * contract has been set up and that the msg.sender is the USDV address
      */
     function _onlyUSDV() private view {
         require(
-            usdv != IUSDV(_ZERO_ADDRESS),
-            "Vader::_onlyUSDV: USDV not set yet"
-        );
-        require(
-            address(usdv) == _msgSender(),
+            address(usdv) == msg.sender,
             "Vader::_onlyUSDV: Insufficient Privileges"
         );
     }
 
     /* ========== MODIFIERS ========== */
-    
+
     /**
      * @dev Throws if invoked by anyone else other than the USDV
      */

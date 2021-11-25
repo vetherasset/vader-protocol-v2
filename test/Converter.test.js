@@ -69,10 +69,9 @@ contract.only("Converter", (accounts) => {
         it("should deploy the Converter contract with a correct state", async () => {
             if (Array.isArray(accounts))
                 accounts = await verboseAccounts(accounts);
-            const { converter, vether, vader, vesting } = await deployMock(
-                accounts
-            );
-            await converter.setVesting(vesting.address);
+            const { converter, vether, vader, vesting, ADMINISTRATOR } =
+                await deployMock(accounts);
+            await converter.setVesting(vesting.address, ADMINISTRATOR);
             assert.ok(converter.address);
 
             assert.equal(await converter.vether(), vether.address);
@@ -106,7 +105,7 @@ contract.only("Converter", (accounts) => {
             const { converter } = await deployMock();
 
             await assertErrors(
-                converter.convert([], 0),
+                converter.convert([], 0, 0),
                 "Converter::convert: Non-Zero Conversion Amount Required"
             );
         });
@@ -117,7 +116,7 @@ contract.only("Converter", (accounts) => {
             await vether.mint(accounts.account0, TEN_UNITS);
 
             await assertErrors(
-                converter.convert([], TEN_UNITS),
+                converter.convert([], TEN_UNITS, 0),
                 "Converter::convert: Incorrect Proof Provided"
             );
         });
@@ -174,14 +173,17 @@ contract.only("Converter", (accounts) => {
             const expectedConversion = TEN_UNITS.mul(
                 VADER_VETHER_CONVERSION_RATE
             );
-            await converter.setVesting(vesting.address);
-            assertEvents(await converter.convert(proof, TEN_UNITS), {
-                Conversion: {
-                    user: accounts.account0,
-                    vetherAmount: TEN_UNITS,
-                    vaderAmount: expectedConversion,
-                },
-            });
+            await converter.setVesting(vesting.address, ADMINISTRATOR);
+            assertEvents(
+                await converter.convert(proof, TEN_UNITS, expectedConversion),
+                {
+                    Conversion: {
+                        user: accounts.account0,
+                        vetherAmount: TEN_UNITS,
+                        vaderAmount: expectedConversion,
+                    },
+                }
+            );
             assertBn(await vether.balanceOf(accounts.account0), 0);
             assertBn(await vether.balanceOf(BURN), TEN_UNITS);
             assertBn(
