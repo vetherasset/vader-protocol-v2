@@ -3,14 +3,14 @@ const { VADER, CONVERTER, VESTING } = require("./constants");
 const Vader = artifacts.require("Vader");
 
 const VESTERS = {
-    mainnet: [],
+    mainnet: ["0xed304246aD1173f9fC7028Ae2c79d1BA686BfA7d"],
     kovan: ["0x1b83E9b5FC38f7db0D5672279D45EFEC0F72C394"],
 };
 
 const TEAM_ALLOCATION = new BN(2_500_000_000).mul(new BN(10).pow(new BN(18)));
 
 const VESTING_AMOUNTS = {
-    mainnet: [],
+    mainnet: [TEAM_ALLOCATION],
     kovan: [TEAM_ALLOCATION],
 };
 
@@ -18,10 +18,6 @@ module.exports = async function (deployer, network) {
     // skip development
     if (network == "development") {
         return;
-    }
-
-    if (network !== "kovan") {
-        throw new Error("fix parameters for mainnet");
     }
 
     const vader = await Vader.at(VADER[network]);

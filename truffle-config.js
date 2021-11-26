@@ -85,7 +85,7 @@ module.exports = {
                     `wss://mainnet.infura.io/ws/v3/${process.env.INFURA_API_KEY}`
                 ),
             network_id: 1,
-            gas: 5500000,
+            gas: 1500000,
             confirmations: 2,
             timeoutBlocks: 200,
             skipDryRun: true,
