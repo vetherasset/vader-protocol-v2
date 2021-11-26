@@ -3,12 +3,13 @@ const { VETHER, VADER } = require("./constants");
 const Converter = artifacts.require("Converter");
 
 const MERKLE_ROOTS = {
-    main: "0x93bc4275f0e850574c848d04f1a8edbb63a1d961524541e618d28f31b2c6684d",
+    mainnet:
+        "0x93bc4275f0e850574c848d04f1a8edbb63a1d961524541e618d28f31b2c6684d",
     kovan: "0x076beee425cd687f1c68f81585d9cd19398b7e80cdcc48465c175e959946fdcd",
 };
 
 const CONVERTER_SALTS = {
-    main: 13662469,
+    mainnet: 13662469,
     kovan: 28516565,
 };
 

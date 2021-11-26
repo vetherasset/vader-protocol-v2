@@ -78,6 +78,18 @@ module.exports = {
             timeoutBlocks: 200,
             skipDryRun: true,
         },
+        mainnet: {
+            provider: () =>
+                new HDWalletProvider(
+                    mnemonic,
+                    `wss://mainnet.infura.io/ws/v3/${process.env.INFURA_API_KEY}`
+                ),
+            network_id: 1,
+            gas: 5500000,
+            confirmations: 2,
+            timeoutBlocks: 200,
+            skipDryRun: true,
+        },
         // Useful for private networks
         // private: {
         // provider: () => new HDWalletProvider(mnemonic, `https://network.io`),

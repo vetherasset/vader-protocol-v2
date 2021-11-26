@@ -1,22 +1,22 @@
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const VETHER = {
-    main: "0x4Ba6dDd7b89ed838FEd25d208D4f644106E34279",
+    mainnet: "0x4Ba6dDd7b89ed838FEd25d208D4f644106E34279",
     kovan: "0x87D96b9f386d70C72fD7DBcE5a3d2a7D3321446d",
 };
 
 const VADER = {
-    main: "",
+    mainnet: "0x0595aF52e4022aEBd794DE267fc20C12C50c08f8",
     kovan: "0xcCb3AeF7Baa506e2D05193e38e88459F68AC1a8F",
 };
 
 const CONVERTER = {
-    main: "",
+    mainnet: "0xc4E4cA3F7cA1cfDc70d1364001A932B2870b0B58",
     kovan: "0x8A313Fa0cb3ed92bE4Cae3a4deF7C32c78181E09",
 };
 
 const VESTING = {
-    main: "",
+    mainnet: "0x8Ce813218dFFa5D15e9765F59898048e49149f2a",
     kovan: "0xDaA4B82D5Bdd315a3191B080E26ff7A88eb8034E",
 };
 
