@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./BasePoolV2.sol";
 
+import "../../external/libraries/FixedPoint.sol";
+
 import "../../interfaces/shared/IERC20Extended.sol";
 import "../../interfaces/dex-v2/pool/IVaderPoolV2.sol";
 import "../../interfaces/dex-v2/wrapper/ILPWrapper.sol";
@@ -72,6 +74,32 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         price0CumulativeLast = priceCumulative.nativeLast;
         price1CumulativeLast = priceCumulative.foreignLast;
         blockTimestampLast = pairInfo[foreignAsset].blockTimestampLast;
+
+        if (blockTimestampLast < block.timestamp) {
+            uint256 timeElapsed = block.timestamp - blockTimestampLast;
+            unchecked {
+                price0CumulativeLast +=
+                    uint256(
+                        FixedPoint
+                            .fraction(
+                                pairInfo[foreignAsset].reserveForeign,
+                                pairInfo[foreignAsset].reserveNative
+                            )
+                            ._x
+                    ) *
+                    timeElapsed;
+                price1CumulativeLast +=
+                    uint256(
+                        FixedPoint
+                            .fraction(
+                                pairInfo[foreignAsset].reserveNative,
+                                pairInfo[foreignAsset].reserveForeign
+                            )
+                            ._x
+                    ) *
+                    timeElapsed;
+            }
+        }
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -120,6 +148,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * Updates the cumulative prices for native and foreign assets.
      *
      * Requirements:
+     * - only router can call this function.
      * - {foreignAsset} must be a supported token.
      **/
     function mintSynth(
@@ -132,6 +161,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         override
         nonReentrant
         supportedToken(foreignAsset)
+        onlyRouter
         returns (uint256 amountSynth)
     {
         nativeAsset.safeTransferFrom(from, address(this), nativeDeposit);
@@ -153,7 +183,6 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
             reserveForeign
         );
 
-        // TODO: Clarify
         _update(
             foreignAsset,
             reserveNative + nativeDeposit,
@@ -172,6 +201,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * Updates the cumulative prices for native and foreign assets.
      *
      * Requirements:
+     * - only router can call this function.
      * - {foreignAsset} must have a valid synthetic asset against it.
      * - {synthAmount} must be greater than zero.
      **/
@@ -179,7 +209,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         IERC20 foreignAsset,
         uint256 synthAmount,
         address to
-    ) external override nonReentrant returns (uint256 amountNative) {
+    ) external override nonReentrant onlyRouter returns (uint256 amountNative) {
         ISynth synth = synthFactory.synths(foreignAsset);
 
         require(
@@ -205,7 +235,6 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
             reserveNative
         );
 
-        // TODO: Clarify
         _update(
             foreignAsset,
             reserveNative - amountNative,
@@ -233,6 +262,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * - Can only be called by the Router.
      **/
     // NOTE: IL is only covered via router!
+    // NOTE: Loss is in terms of USDV
     function burn(uint256 id, address to)
         external
         override
@@ -253,7 +283,6 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
 
         delete positions[id];
 
-        // NOTE: Validate it behaves as expected for non-18 decimal tokens
         uint256 loss = VaderMath.calculateLoss(
             originalNative,
             originalForeign,
@@ -261,7 +290,6 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
             amountForeign
         );
 
-        // TODO: Original Implementation Applied 100 Days
         coveredLoss =
             (loss * _min(block.timestamp - creation, _ONE_YEAR)) /
             _ONE_YEAR;
@@ -278,6 +306,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * Calls 'mint' on the LP wrapper token contract.
      *
      * Requirements:
+     * - only router can call this function.
      * - LP wrapper token must exist against {foreignAsset}.
      **/
     function mintFungible(
@@ -286,7 +315,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         uint256 foreignDeposit,
         address from,
         address to
-    ) external override nonReentrant returns (uint256 liquidity) {
+    ) external override nonReentrant onlyRouter returns (uint256 liquidity) {
         IERC20Extended lp = wrapper.tokens(foreignAsset);
 
         require(
@@ -341,6 +370,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * Calls 'burn' on the LP wrapper token contract.
      *
      * Requirements:
+     * - only router can call this function.
      * - LP wrapper token must exist against {foreignAsset}.
      * - {amountNative} and {amountForeign} redeemed, both must be greater than zero.,
      **/
@@ -352,6 +382,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         external
         override
         nonReentrant
+        onlyRouter
         returns (uint256 amountNative, uint256 amountForeign)
     {
         IERC20Extended lp = wrapper.tokens(foreignAsset);
@@ -396,9 +427,11 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    // TODO: Investigate Necessity
-    function toggleQueue() external override onlyOwner {
-        bool _queueActive = !queueActive;
+    function setQueue(bool _queueActive) external override onlyOwner {
+        require(
+            _queueActive != queueActive,
+            "VaderPoolV2::setQueue: Already At Desired State"
+        );
         queueActive = _queueActive;
         emit QueueActive(_queueActive);
     }
@@ -409,16 +442,53 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * Requirements:
      * - The param {foreignAsset} is not already a supported token.
      **/
-    function setTokenSupport(IERC20 foreignAsset, bool support)
-        external
-        override
-        onlyOwner
-    {
+    function setTokenSupport(
+        IERC20 foreignAsset,
+        bool support,
+        uint256 nativeDeposit,
+        uint256 foreignDeposit,
+        address from,
+        address to
+    ) external override onlyOwner returns (uint256 liquidity) {
         require(
             supported[foreignAsset] != support,
             "VaderPoolV2::supportToken: Already At Desired State"
         );
         supported[foreignAsset] = support;
+        if (!support) {
+            PairInfo storage pair = pairInfo[foreignAsset];
+            require(
+                pair.reserveNative == 0 && pair.reserveForeign == 0,
+                "VaderPoolV2::supportToken: Cannot Unsupport Token w/ Liquidity"
+            );
+        } else {
+            require(
+                nativeDeposit != 0 && foreignDeposit != 0,
+                "VaderPoolV2::supportToken: Improper First-Time Liquidity Provision"
+            );
+            liquidity = _mint(
+                foreignAsset,
+                nativeDeposit,
+                foreignDeposit,
+                from,
+                to
+            );
+        }
+    }
+
+    /*
+     * @dev Allows the gas throttle to be toggled on/off in case of emergency
+     **/
+    function setGasThrottle(bool _gasThrottleEnabled)
+        external
+        override
+        onlyOwner
+    {
+        require(
+            gasThrottleEnabled != _gasThrottleEnabled,
+            "VaderPoolV2::setGasThrottle: Already At Desired State"
+        );
+        gasThrottleEnabled = _gasThrottleEnabled;
     }
 
     /*

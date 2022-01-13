@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+
 pragma solidity =0.8.9;
 
 abstract contract ProtocolConstants {
@@ -46,23 +47,12 @@ abstract contract ProtocolConstants {
 
     /* ========== CONVERTER ========== */
 
-    // Vader -> Vether Conversion Rate (1000:1)
+    // Vader -> Vether Conversion Rate (10000:1)
     uint256 internal constant _VADER_VETHER_CONVERSION_RATE = 10_000;
 
     // Burn Address
     address internal constant _BURN =
         0xdeaDDeADDEaDdeaDdEAddEADDEAdDeadDEADDEaD;
-
-    /* ========== SWAP QUEUE ========== */
-
-    // A minimum of 10 swaps will be executed per block
-    uint256 internal constant _MIN_SWAPS_EXECUTED = 10;
-
-    // Expressed in basis points (50%)
-    uint256 internal constant _DEFAULT_SWAPS_EXECUTED = 50_00;
-
-    // The queue size of each block is 100 units
-    uint256 internal constant _QUEUE_SIZE = 100;
 
     /* ========== GAS QUEUE ========== */
 

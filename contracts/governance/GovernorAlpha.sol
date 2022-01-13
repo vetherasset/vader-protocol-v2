@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT AND AGPL-3.0-or-laterD
 pragma solidity =0.8.9;
 pragma experimental ABIEncoderV2;
 
@@ -74,8 +74,9 @@ contract GovernorAlpha {
      * endBlock: The block at which voting ends: votes must be cast prior to this block
      * forVotes: Current number of votes in favor of this proposal
      * againstVotes: Current number of votes in opposition to this proposal
-     * receipts: Receipts of ballots for the entire set of voters
      * vetoStatus: Veto status if the proposal has been vetoed by council in favor or against
+     // C4-Audit Fix for Issue # 141
+     * receipts: Receipts of ballots for the entire set of voters
      */
     struct Proposal {
         uint256 id;
@@ -113,7 +114,8 @@ contract GovernorAlpha {
      * @dev {VetoStatus} contains parameters representing if a proposal has been vetoed by council
      *
      * hasBeenVetoed: Whether proposal has been vetoed or not
-     * support: Whether veto is in favor or against of proposal
+     // C4-Audit Fix for Issue # 142
+     * support: Whether veto is in favor of or against proposal
      */
     struct VetoStatus {
         bool hasBeenVetoed;
@@ -311,8 +313,11 @@ contract GovernorAlpha {
 
         if (proposal.executed) return ProposalState.Executed;
 
-        if (block.timestamp >= proposal.eta + timelock.GRACE_PERIOD())
-            return ProposalState.Expired;
+        // C4-Audit Fix for Issue # 177
+        unchecked {
+            if (block.timestamp >= proposal.eta + timelock.GRACE_PERIOD())
+                return ProposalState.Expired;
+        }
 
         return ProposalState.Queued;
     }
@@ -343,7 +348,8 @@ contract GovernorAlpha {
      *
      * Requirements:
      * - targets, values, signatures and calldatas arrays' lengths must be greater
-     *   than zero, less than {proposalMaxOperations} and are the same.
+     // C4-Audit Fix for Issue # 141
+     *   than zero, less than or equal to {proposalMaxOperations} and are the same lengths.
      * - the caller must approve {feeAmount} xVader to this contract prior to call.
      * - the caller must not have an active/pending proposal.
      */
@@ -386,8 +392,13 @@ contract GovernorAlpha {
             );
         }
 
-        uint256 startBlock = block.number + VOTING_DELAY;
-        uint256 endBlock = startBlock + VOTING_PERIOD;
+        // C4-Audit Fix for Issue # 177
+        uint256 startBlock;
+        uint256 endBlock;
+        unchecked {
+            startBlock = block.number + VOTING_DELAY;
+            endBlock = startBlock + VOTING_PERIOD;
+        }
 
         proposalId = ++proposalCount;
         Proposal storage newProposal = proposals[proposalId];
@@ -430,10 +441,15 @@ contract GovernorAlpha {
             "GovernorAlpha::queue: proposal can only be queued if it is succeeded"
         );
         Proposal storage proposal = proposals[proposalId];
-        uint256 eta = block.timestamp + timelock.delay();
+        // C4-Audit Fix for Issue # 177
+        uint256 eta;
+        unchecked {
+            eta = block.timestamp + timelock.delay();
+        }
 
         uint256 length = proposal.targets.length;
-        for (uint256 i = 0; i < length; i++) {
+        // C4-Audit Fix for Issue # 81
+        for (uint256 i = 0; i < length; ++i) {
             _queueOrRevert(
                 proposal.targets[i],
                 proposal.values[i],
@@ -451,7 +467,8 @@ contract GovernorAlpha {
      * It sets the {executed} status of the proposal to 'true'.
      *
      * Requirements:
-     * - the proposal in question must have been quened and cool-off time has elapsed
+     // C4-Audit Fix for Issue # 142
+     * - the proposal in question must have been queued and cool-off time has elapsed
      * - none of the actions of the proposal revert upon execution
      */
     function execute(uint256 proposalId) public payable {
@@ -462,7 +479,8 @@ contract GovernorAlpha {
         Proposal storage proposal = proposals[proposalId];
         proposal.executed = true;
         uint256 length = proposal.targets.length;
-        for (uint256 i = 0; i < length; i++) {
+        // C4-Audit Fix for Issue # 81
+        for (uint256 i = 0; i < length; ++i) {
             timelock.executeTransaction{value: proposal.values[i]}(
                 proposal.targets[i],
                 proposal.values[i],
@@ -531,6 +549,7 @@ contract GovernorAlpha {
      * - only guardian can call
      */
     function changeFeeReceiver(address feeReceiver_) external onlyGuardian {
+        require(feeReceiver_ != address(0), "Zero address");
         emit FeeReceiverChanged(feeReceiver, feeReceiver_);
         feeReceiver = feeReceiver_;
     }
@@ -546,8 +565,9 @@ contract GovernorAlpha {
         feeAmount = feeAmount_;
     }
 
+    // C4-Audit Fix for Issue # 142
     /**
-     * @dev Allows vetoeing of a proposal in favor or against it.
+     * @dev Allows vetoing of a proposal in favor or against it.
      * It also queues a proposal if it has been vetoed in favor of it and.
      * sets the veto status of the proposal.
      *
@@ -567,10 +587,18 @@ contract GovernorAlpha {
 
         Proposal storage proposal = proposals[proposalId];
         address[] memory _targets = proposal.targets;
-        for (uint256 i = 0; i < _targets.length; i++) {
+        // C4-Audit Fix for Issue # 81
+        for (uint256 i = 0; i < _targets.length; ++i) {
             if (_targets[i] == address(this)) {
-                revert(
-                    "GovernorAlpha::veto: council cannot veto on proposal having action with address(this) as target"
+                // C4-Audit Fix for Issue # 167
+                bytes memory callData = proposal.calldatas[i];
+                bytes4 sig;
+                assembly {
+                    sig := mload(add(callData, 0x20))
+                }
+                require(
+                    sig != this.changeCouncil.selector,
+                    "GovernorAlpha::veto: council cannot veto a council changing proposal"
                 );
             }
         }
@@ -590,7 +618,8 @@ contract GovernorAlpha {
      * @dev Changes the {council}.
      *
      * Requirements:
-     * - can only be called by {Timelock} contract through a non-vetoeable proposal
+     // C4-Audit Fix for Issue # 142
+     * - can only be called by {Timelock} contract through a non-vetoable proposal
      */
     function changeCouncil(address council_) external onlyTimelock {
         emit CouncilChanged(council, council_);
@@ -615,7 +644,8 @@ contract GovernorAlpha {
         Proposal storage proposal = proposals[proposalId];
         proposal.canceled = true;
         uint256 length = proposal.targets.length;
-        for (uint256 i = 0; i < length; i++) {
+        // C4-Audit Fix for Issue # 81
+        for (uint256 i = 0; i < length; ++i) {
             timelock.cancelTransaction(
                 proposal.targets[i],
                 proposal.values[i],
@@ -694,7 +724,6 @@ contract GovernorAlpha {
      * @dev Queues a transaction in {Timelock}.
      *
      * Requirements:
-     * - only callable by guardian
      * - transaction is not already queued in {Timelock}
      */
     function _queueOrRevert(
@@ -748,10 +777,13 @@ contract GovernorAlpha {
             xVader.getPastVotes(voter, proposal.startBlock)
         );
 
-        if (support) {
-            proposal.forVotes = proposal.forVotes + votes;
-        } else {
-            proposal.againstVotes = proposal.againstVotes + votes;
+        // C4-Audit Fix for Issue # 177
+        unchecked {
+            if (support) {
+                proposal.forVotes = proposal.forVotes + votes;
+            } else {
+                proposal.againstVotes = proposal.againstVotes + votes;
+            }
         }
 
         receipt.hasVoted = true;
@@ -769,8 +801,8 @@ contract GovernorAlpha {
     }
 
     /* ========== PRIVATE FUNCTIONS ========== */
-
-    // ensures only {guardian} is able to a particular function.
+    // C4-Audit Fix for Issue # 142
+    // ensures only {guardian} is able to call a particular function.
     function _onlyGuardian() private view {
         require(
             msg.sender == guardian,
@@ -778,7 +810,8 @@ contract GovernorAlpha {
         );
     }
 
-    // ensures only {timelock} is able to a particular function.
+    // C4-Audit Fix for Issue # 142
+    // ensures only {timelock} is able to call a particular function.
     function _onlyTimelock() private view {
         require(
             msg.sender == address(timelock),
@@ -786,7 +819,8 @@ contract GovernorAlpha {
         );
     }
 
-    // ensures only {council} is able to a particular function.
+    // C4-Audit Fix for Issue # 142
+    // ensures only {council} is able to call a particular function.
     function _onlyCouncil() private view {
         require(
             msg.sender == council,

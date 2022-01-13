@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+
 pragma solidity =0.8.9;
 
-import "../interfaces/IUniswapV2Pair.sol";
-
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
+import "../../interfaces/external/uniswap/IUniswapV2Pair.sol";
 
 library UniswapV2Library {
     using SafeMath for uint256;

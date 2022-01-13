@@ -40,7 +40,7 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
     mapping(address => Vester) public vest;
 
     // The address of Converter contract.
-    address public converter;
+    address public immutable converter;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -165,7 +165,8 @@ contract LinearVesting is ILinearVesting, ProtocolConstants, Ownable {
         end = _end;
 
         uint256 total;
-        for (uint256 i = 0; i < vesters.length; i++) {
+        // C4-Audit Fix for Issue # 81
+        for (uint256 i = 0; i < vesters.length; ++i) {
             require(
                 amounts[i] != 0,
                 "LinearVesting::begin: Incorrect Amount Specified"

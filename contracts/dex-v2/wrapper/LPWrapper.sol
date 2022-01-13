@@ -9,10 +9,6 @@ contract LPWrapper is ILPWrapper, ProtocolConstants, Ownable {
     mapping(IERC20 => IERC20Extended) public override tokens;
 
     constructor(address pool) {
-        require(
-            pool != _ZERO_ADDRESS,
-            "LPWrapper::constructor: Misconfiguration"
-        );
         transferOwnership(pool);
     }
 

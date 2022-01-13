@@ -4,9 +4,9 @@ pragma solidity =0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../../shared/ProtocolConstants.sol";
+import "../math/VaderMath.sol";
 
-import "../../dex/math/VaderMath.sol";
+import "../../shared/ProtocolConstants.sol";
 
 import "../../interfaces/reserve/IVaderReserve.sol";
 import "../../interfaces/dex-v2/router/IVaderRouterV2.sol";
@@ -37,11 +37,14 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
     // Address of the Vader pool contract.
     IVaderPoolV2 public immutable pool;
 
-    // Address of native asset (USDV or Vader).
+    // Address of native asset USDV.
     IERC20 public immutable nativeAsset;
 
     // Address of reserve contract.
     IVaderReserve public reserve;
+
+    // Denotes what pairs are actively supported for synths and IL.
+    mapping(IERC20 => bool) public permissionedPairs;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -217,7 +220,8 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
         require(amountA >= amountAMin, "VaderRouterV2: INSUFFICIENT_A_AMOUNT");
         require(amountB >= amountBMin, "VaderRouterV2: INSUFFICIENT_B_AMOUNT");
 
-        reserve.reimburseImpermanentLoss(msg.sender, coveredLoss);
+        if (permissionedPairs[_foreignAsset])
+            reserve.reimburseImpermanentLoss(msg.sender, coveredLoss);
     }
 
     /*
@@ -245,6 +249,101 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
         );
     }
 
+    /*
+     * @dev Allows minting of synthetic assets corresponding to the {foreignAsset} based
+     * on the native asset amount deposited and returns the minted synth asset amount.
+     *
+     * Creates the synthetic asset against {foreignAsset} if it does not already exist.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Requirements:
+     * - {foreignAsset} must be a supported token.
+     **/
+    function mintSynth(
+        IERC20 foreignAsset,
+        uint256 nativeDeposit,
+        address from,
+        address to
+    ) external returns (uint256) {
+        require(
+            permissionedPairs[foreignAsset],
+            "VaderRouterV2::mintSynth: Unsupported Asset"
+        );
+        return pool.mintSynth(foreignAsset, nativeDeposit, from, to);
+    }
+
+    /*
+     * @dev Allows burning of synthetic assets corresponding to the {foreignAsset}
+     * and returns the redeemed amount of native asset.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Requirements:
+     * - {foreignAsset} must have a valid synthetic asset against it.
+     * - {synthAmount} must be greater than zero.
+     **/
+    function burnSynth(
+        IERC20 foreignAsset,
+        uint256 synthAmount,
+        address to
+    ) external returns (uint256) {
+        return pool.burnSynth(foreignAsset, synthAmount, to);
+    }
+
+    /*
+     * @dev Allows minting of liquidity in fungible tokens. The fungible token
+     * is a wrapped LP token against a particular pair. The liquidity issued is also
+     * tracked within this contract along with liquidity issued against non-fungible
+     * token.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Calls 'mint' on the LP wrapper token contract.
+     *
+     * Requirements:
+     * - LP wrapper token must exist against {foreignAsset}.
+     **/
+    function mintFungible(
+        IERC20 foreignAsset,
+        uint256 nativeDeposit,
+        uint256 foreignDeposit,
+        address from,
+        address to
+    ) external returns (uint256) {
+        require(
+            permissionedPairs[foreignAsset],
+            "VaderRouterV2::mintFungible: Unsupported Asset"
+        );
+        return
+            pool.mintFungible(
+                foreignAsset,
+                nativeDeposit,
+                foreignDeposit,
+                from,
+                to
+            );
+    }
+
+    /*
+     * @dev Allows burning of liquidity issued in fungible tokens.
+     *
+     * Updates the cumulative prices for native and foreign assets.
+     *
+     * Calls 'burn' on the LP wrapper token contract.
+     *
+     * Requirements:
+     * - LP wrapper token must exist against {foreignAsset}.
+     * - {amountNative} and {amountForeign} redeemed, both must be greater than zero.,
+     **/
+    function burnFungible(
+        IERC20 foreignAsset,
+        uint256 liquidity,
+        address to
+    ) external returns (uint256, uint256) {
+        return pool.burnFungible(foreignAsset, liquidity, to);
+    }
+
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     /*
@@ -261,8 +360,25 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
         );
 
         reserve = _reserve;
+    }
 
-        renounceOwnership();
+    /*
+     * @dev Sets the supported state of the pair represented by param {_pair}.
+     *
+     * Requirements:
+     * - Only existing owner can call this function.
+     * - Param {_pair} cannot be a zero address.
+     **/
+    function setSupportedPair(IERC20 _pair, bool _support) external onlyOwner {
+        require(
+            address(_pair) != address(0),
+            "VaderRouterV2::setSupportedPair: Zero Address"
+        );
+        require(
+            permissionedPairs[_pair] != _support,
+            "VaderRouterV2::supportToken: Already At Desired State"
+        );
+        permissionedPairs[_pair] = _support;
     }
 
     /* ========== INTERNAL FUNCTIONS ========== */

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -7,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../shared/ProtocolConstants.sol";
 
 import "../interfaces/reserve/IVaderReserve.sol";
+import "../interfaces/lbt/ILiquidityBasedTWAP.sol";
 
 contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
     /* ========== LIBRARIES ========== */
@@ -25,11 +27,12 @@ contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
     // Tracks last grant time for throttling
     uint256 public lastGrant;
 
+    // LBT used for loss reimbursement
+    ILiquidityBasedTWAP public lbt;
+
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
-        IERC20 _vader
-    ) {
+    constructor(IERC20 _vader) {
         require(
             _vader != IERC20(_ZERO_ADDRESS),
             "VaderReserve::constructor: Incorrect Arguments"
@@ -62,13 +65,18 @@ contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function initialize(address _router, address _dao) external onlyOwner {
-         require(
+    function initialize(
+        ILiquidityBasedTWAP _lbt,
+        address _router,
+        address _dao
+    ) external onlyOwner {
+        require(
             _router != _ZERO_ADDRESS &&
-                _dao != _ZERO_ADDRESS,
+                _lbt != ILiquidityBasedTWAP(_ZERO_ADDRESS),
             "VaderReserve::initialize: Incorrect Arguments"
         );
         router = _router;
+        lbt = _lbt;
         transferOwnership(_dao);
     }
 
@@ -80,6 +88,18 @@ contract VaderReserve is IVaderReserve, ProtocolConstants, Ownable {
             msg.sender == router,
             "VaderReserve::reimburseImpermanentLoss: Insufficient Priviledges"
         );
+
+        // NOTE: Loss is in USDV, reimbursed in VADER
+        // NOTE: If USDV LBT is working, prefer it otherwise use VADER price
+        if (lbt.previousPrices(uint256(ILiquidityBasedTWAP.Paths.USDV)) != 0) {
+            uint256 usdvPrice = lbt.getUSDVPrice();
+
+            amount = amount / usdvPrice;
+        } else {
+            uint256 vaderPrice = lbt.getVaderPrice();
+
+            amount = amount * vaderPrice;
+        }
 
         uint256 actualAmount = _min(reserve(), amount);
 

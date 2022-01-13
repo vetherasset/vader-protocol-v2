@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../../shared/ProtocolConstants.sol";
+import "../math/VaderMath.sol";
+import "../utils/GasThrottle.sol";
 
-import "../../dex/math/VaderMath.sol";
-import "../../dex/utils/GasThrottle.sol";
+import "../../shared/ProtocolConstants.sol";
 
 import "../../external/libraries/UQ112x112.sol";
 
@@ -37,7 +37,7 @@ import "../../interfaces/dex-v2/pool/IBasePoolV2.sol";
  * Keeps track of the cumulative prices for both native and foreign assets for
  * pairs and updates them after minting and burning of liquidity, and swapping of assets.
  **/
-contract BasePoolV2 is
+abstract contract BasePoolV2 is
     IBasePoolV2,
     ProtocolConstants,
     GasThrottle,
@@ -54,7 +54,7 @@ contract BasePoolV2 is
 
     /* ========== STATE VARIABLES ========== */
 
-    // Address of native asset (Vader or USDV).
+    // Address of native asset USDV.
     IERC20 public immutable override nativeAsset;
 
     // Denotes what tokens are actively supported by the system
@@ -78,7 +78,8 @@ contract BasePoolV2 is
      **/
     mapping(uint256 => Position) public positions;
 
-    // A unique id the of the position created when liquidity is added to a pool.
+    // C4-Audit Fix for Issue # 142
+    // A unique id of the position created when liquidity is added to a pool.
     uint256 public positionId;
 
     // Address of the router contract (used for restriction)
@@ -173,58 +174,11 @@ contract BasePoolV2 is
     )
         external
         override
-        nonReentrant
         onlyRouter
         supportedToken(foreignAsset)
         returns (uint256 liquidity)
     {
-        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
-            foreignAsset
-        ); // gas savings
-
-        nativeAsset.safeTransferFrom(from, address(this), nativeDeposit);
-        foreignAsset.safeTransferFrom(from, address(this), foreignDeposit);
-
-        PairInfo storage pair = pairInfo[foreignAsset];
-        uint256 totalLiquidityUnits = pair.totalSupply;
-        if (totalLiquidityUnits == 0) liquidity = nativeDeposit;
-        else
-            liquidity = VaderMath.calculateLiquidityUnits(
-                nativeDeposit,
-                reserveNative,
-                foreignDeposit,
-                reserveForeign,
-                totalLiquidityUnits
-            );
-
-        require(
-            liquidity > 0,
-            "BasePoolV2::mint: Insufficient Liquidity Provided"
-        );
-
-        uint256 id = positionId++;
-
-        pair.totalSupply = totalLiquidityUnits + liquidity;
-        _mint(to, id);
-
-        positions[id] = Position(
-            foreignAsset,
-            block.timestamp,
-            liquidity,
-            nativeDeposit,
-            foreignDeposit
-        );
-
-        _update(
-            foreignAsset,
-            reserveNative + nativeDeposit,
-            reserveForeign + foreignDeposit,
-            reserveNative,
-            reserveForeign
-        );
-
-        emit Mint(from, to, nativeDeposit, foreignDeposit);
-        emit PositionOpened(from, to, id, liquidity);
+        return _mint(foreignAsset, nativeDeposit, foreignDeposit, from, to);
     }
 
     /*
@@ -518,6 +472,65 @@ contract BasePoolV2 is
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     /* ========== INTERNAL FUNCTIONS ========== */
+
+    /*
+     * @dev See `mint`.
+     **/
+    function _mint(
+        IERC20 foreignAsset,
+        uint256 nativeDeposit,
+        uint256 foreignDeposit,
+        address from,
+        address to
+    ) internal nonReentrant returns (uint256 liquidity) {
+        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
+            foreignAsset
+        ); // gas savings
+
+        nativeAsset.safeTransferFrom(from, address(this), nativeDeposit);
+        foreignAsset.safeTransferFrom(from, address(this), foreignDeposit);
+
+        PairInfo storage pair = pairInfo[foreignAsset];
+        uint256 totalLiquidityUnits = pair.totalSupply;
+        if (totalLiquidityUnits == 0) liquidity = nativeDeposit;
+        else
+            liquidity = VaderMath.calculateLiquidityUnits(
+                nativeDeposit,
+                reserveNative,
+                foreignDeposit,
+                reserveForeign,
+                totalLiquidityUnits
+            );
+
+        require(
+            liquidity > 0,
+            "BasePoolV2::mint: Insufficient Liquidity Provided"
+        );
+
+        uint256 id = positionId++;
+
+        pair.totalSupply = totalLiquidityUnits + liquidity;
+        _mint(to, id);
+
+        positions[id] = Position(
+            foreignAsset,
+            block.timestamp,
+            liquidity,
+            nativeDeposit,
+            foreignDeposit
+        );
+
+        _update(
+            foreignAsset,
+            reserveNative + nativeDeposit,
+            reserveForeign + foreignDeposit,
+            reserveNative,
+            reserveForeign
+        );
+
+        emit Mint(from, to, nativeDeposit, foreignDeposit);
+        emit PositionOpened(from, to, id, liquidity);
+    }
 
     /*
      * @dev Internally called to update the cumulative prices for native and foreign assets for

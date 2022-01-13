@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+
 pragma solidity =0.8.9;
 
-import "../external/interfaces/IUniswapV2Factory.sol";
+import "../interfaces/external/uniswap/IUniswapV2Factory.sol";
 import "../external/UniswapV2Pair.sol";
 
 contract MockUniswapV2Factory is IUniswapV2Factory {

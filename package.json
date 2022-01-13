@@ -1,7 +1,7 @@
 {
-    "name": "vader-protocol-v2",
+    "name": "vader-monorepo",
     "version": "1.0.0",
-    "description": "",
+    "description": "The Vader monorepo",
     "main": "truffle-config.js",
     "directories": {
         "test": "test"
@@ -13,28 +13,25 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/vetherasset/vader-protocol-v2.git"
+        "url": "git+https://github.com/JCRST/vader-monorepo.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/vetherasset/vader-protocol-v2/issues"
+        "url": "https://github.com/JCRST/vader-monorepo/issues"
     },
-    "homepage": "https://github.com/vetherasset/vader-protocol-v2#readme",
+    "homepage": "https://github.com/JCRST/vader-monorepo#readme",
     "dependencies": {
-        "@openzeppelin/contracts": "^4.3.2",
+        "@openzeppelin/contracts": "4.3.2",
+        "@openzeppelin/contracts-upgradeable": "^4.4.1",
         "@openzeppelin/test-helpers": "^0.5.6",
-        "@truffle/hdwallet-provider": "^1.5.1",
-        "bn.js": "^5.2.0",
-        "dotenv": "^10.0.0",
-        "solidity-coverage": "^0.7.17",
-        "truffle": "^5.4.16"
+        "@truffle/hdwallet-provider": "^2.0.0",
+        "solidity-coverage": "^0.7.17"
     },
     "devDependencies": {
+        "dotenv": "^11.0.0",
         "ethers": "^5.5.1",
         "keccak256": "^1.0.3",
-        "merkletreejs": "^0.2.24",
-        "eth-gas-reporter": "^0.2.22",
-        "truffle-plugin-verify": "^0.5.15"
+        "merkletreejs": "^0.2.24"
     }
 }

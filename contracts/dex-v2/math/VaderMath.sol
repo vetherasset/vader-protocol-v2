@@ -75,10 +75,6 @@ library VaderMath {
         uint256 releasedVader,
         uint256 releasedAsset
     ) internal pure returns (uint256 loss) {
-        //
-        // TODO: Vader Formula Differs https://github.com/vetherasset/vaderprotocol-contracts/blob/main/contracts/Utils.sol#L347-L356
-        //
-
         // [(A0 * P1) + V0]
         uint256 originalValue = ((originalAsset * releasedVader) /
             releasedAsset) + originalVader;

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+
 pragma solidity =0.8.9;
 
 interface IVader {
@@ -16,10 +17,7 @@ interface IVader {
 
     event GrantClaimed(address indexed beneficiary, uint256 amount);
 
-    event ProtocolInitialized(
-        address converter,
-        address vest
-    );
+    event ProtocolInitialized(address converter, address vest);
 
     event USDVSet(address usdv);
 

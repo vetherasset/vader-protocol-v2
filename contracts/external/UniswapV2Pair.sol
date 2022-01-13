@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+
 pragma solidity =0.8.9;
 
-import "./interfaces/IUniswapV2Pair.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./UniswapV2ERC20.sol";
 import "./libraries/UniswapMath.sol";
 import "./libraries/UQ112x112.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/IUniswapV2Factory.sol";
-import "./interfaces/IUniswapV2Callee.sol";
+
+import "../interfaces/external/uniswap/IUniswapV2Pair.sol";
+import "../interfaces/external/uniswap/IUniswapV2Factory.sol";
+import "../interfaces/external/uniswap/IUniswapV2Callee.sol";
 
 contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
     using UQ112x112 for uint224;
@@ -113,7 +116,9 @@ contract UniswapV2Pair is IUniswapV2Pair, UniswapV2ERC20 {
         uint256 _kLast = kLast; // gas savings
         if (feeOn) {
             if (_kLast != 0) {
-                uint256 rootK = UniswapMath.sqrt(uint256(_reserve0) * _reserve1);
+                uint256 rootK = UniswapMath.sqrt(
+                    uint256(_reserve0) * _reserve1
+                );
                 uint256 rootKLast = UniswapMath.sqrt(_kLast);
                 if (rootK > rootKLast) {
                     uint256 numerator = totalSupply * (rootK - rootKLast);

@@ -9,10 +9,6 @@ contract SynthFactory is ISynthFactory, ProtocolConstants, Ownable {
     mapping(IERC20 => ISynth) public override synths;
 
     constructor(address _pool) {
-        require(
-            _pool != _ZERO_ADDRESS,
-            "SynthFactory::constructor: Misconfiguration"
-        );
         transferOwnership(_pool);
     }
 

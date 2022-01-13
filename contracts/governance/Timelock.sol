@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT AND AGPL-3.0-or-laterD
 pragma solidity =0.8.9;
 
 import "../interfaces/governance/ITimelock.sol";
@@ -12,7 +12,8 @@ import "../interfaces/governance/ITimelock.sol";
  * of transaction.
  *
  * It allows changing of contract's admin through a queued transaction by the
- * prior admin. The new admin the calls {acceptAdmin} to accept its role.
+ // C4-Audit Fix for Issue # 142
+ * prior admin. The new admin then calls {acceptAdmin} to accept its role.
  */
 contract Timelock is ITimelock {
     // Current admin of the contract
@@ -147,7 +148,8 @@ contract Timelock is ITimelock {
         );
         delay = delay_;
 
-        emit NewDelay(delay);
+        // C4-Audit Fix for Issue # 106
+        emit NewDelay(delay_);
     }
 
     /**
@@ -182,8 +184,8 @@ contract Timelock is ITimelock {
             "Timelock::setPendingAdmin: Call must come from Timelock."
         );
         pendingAdmin = pendingAdmin_;
-
-        emit NewPendingAdmin(pendingAdmin);
+        // C4-Audit Fix for Issue # 106
+        emit NewPendingAdmin(pendingAdmin_);
     }
 
     /**
@@ -196,10 +198,11 @@ contract Timelock is ITimelock {
     function queueTransaction(
         address target,
         uint256 value,
-        string memory signature,
-        bytes memory data,
+        // C4-Audit Fix for Issue # 207
+        string calldata signature,
+        bytes calldata data,
         uint256 eta
-    ) public override returns (bytes32 txHash) {
+    ) external override returns (bytes32 txHash) {
         require(
             msg.sender == admin,
             "Timelock::queueTransaction: Call must come from admin."
@@ -224,10 +227,11 @@ contract Timelock is ITimelock {
     function cancelTransaction(
         address target,
         uint256 value,
-        string memory signature,
-        bytes memory data,
+        // C4-Audit Fix for Issue # 207
+        string calldata signature,
+        bytes calldata data,
         uint256 eta
-    ) public override {
+    ) external override {
         require(
             msg.sender == admin,
             "Timelock::cancelTransaction: Call must come from admin."
@@ -255,10 +259,11 @@ contract Timelock is ITimelock {
     function executeTransaction(
         address target,
         uint256 value,
-        string memory signature,
-        bytes memory data,
+       // C4-Audit Fix for Issue # 207
+        string calldata signature,
+        bytes calldata data,
         uint256 eta
-    ) public payable override returns (bytes memory) {
+    ) external payable override returns (bytes memory) {
         require(
             msg.sender == admin,
             "Timelock::executeTransaction: Call must come from admin."

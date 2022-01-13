@@ -5,13 +5,15 @@ import "../../shared/ProtocolConstants.sol";
 
 import "../../interfaces/external/chainlink/IAggregator.sol";
 
-contract GasThrottle is ProtocolConstants {
+abstract contract GasThrottle is ProtocolConstants {
+    bool public gasThrottleEnabled = true;
+
     modifier validateGas() {
-        // TODO: Uncomment prior to launch
         // require(
-        //     block.basefee <= tx.gasprice &&
-        //         tx.gasprice <=
-        //         uint256(IAggregator(_FAST_GAS_ORACLE).latestAnswer()),
+        //     gasThrottleEnabled &&
+        //         (block.basefee <= tx.gasprice &&
+        //             tx.gasprice <=
+        //             uint256(IAggregator(_FAST_GAS_ORACLE).latestAnswer())),
         //     "GasThrottle::validateGas: Gas Exceeds Thresholds"
         // );
         _;

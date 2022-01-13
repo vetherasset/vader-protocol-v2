@@ -18,6 +18,11 @@ contract LPToken is ILPToken, ProtocolConstants, ERC20, Ownable {
     constructor(IERC20Extended _foreignAsset, IVaderPoolV2 _pool)
         ERC20("VADER-V1", _calculateSymbol(_foreignAsset))
     {
+        require(
+            address(_foreignAsset) != _ZERO_ADDRESS &&
+                address(_pool) != _ZERO_ADDRESS,
+            "LPToken::constructor: Zero Address"
+        );
         foreignAsset = _foreignAsset;
         pool = _pool;
         transferOwnership(address(_pool));

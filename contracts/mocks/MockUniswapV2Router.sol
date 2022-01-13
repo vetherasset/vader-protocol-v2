@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
 pragma solidity =0.8.9;
 
-import "../external/interfaces/IUniswapV2Factory.sol";
-import "../external/interfaces/IUniswapV2Router02.sol";
-import "../external/libraries/TransferHelper.sol";
-import "../external/libraries/UniswapV2Library.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../external/interfaces/IWETH.sol";
+
+import "../interfaces/external/uniswap/IUniswapV2Factory.sol";
+import "../interfaces/external/uniswap/IUniswapV2Router02.sol";
+import "../interfaces/external/weth/IWETH.sol";
+
+import "../external/libraries/TransferHelper.sol";
+import "../external/libraries/UniswapV2Library.sol";
 
 contract MockUniswapV2Router is IUniswapV2Router02 {
     using SafeMath for uint256;
