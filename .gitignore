@@ -110,3 +110,4 @@ build/
 
 .secret
 .DS_Store
+tmp
