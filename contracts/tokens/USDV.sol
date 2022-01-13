@@ -35,7 +35,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
     address public guardian;
 
     // Lock system
-    bool private isLocked;
+    bool public isLocked;
 
     // Minter contract
     address public minter;
