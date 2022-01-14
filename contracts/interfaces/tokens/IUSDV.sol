@@ -24,14 +24,16 @@ interface IUSDV {
         address account,
         uint256 vAmount,
         uint256 uAmount,
-        uint256 exchangeFee
+        uint256 exchangeFee,
+        uint256 window
     ) external;
 
     function burn(
         address account,
         uint256 uAmount,
         uint256 vAmount,
-        uint256 exchangeFee
+        uint256 exchangeFee,
+        uint256 window
     ) external;
 
     /* ========== EVENTS ========== */

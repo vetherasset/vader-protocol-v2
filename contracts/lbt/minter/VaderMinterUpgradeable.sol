@@ -99,7 +99,13 @@ contract VaderMinterUpgradeable is
             "VMU::mint: 24 Hour Limit Reached"
         );
 
-        usdv.mint(msg.sender, vAmount, uAmount, getPublicFee());
+        usdv.mint(
+            msg.sender,
+            vAmount,
+            uAmount,
+            getPublicFee(),
+            lbt.maxUpdateWindow()
+        );
         return uAmount;
     }
 
@@ -135,7 +141,13 @@ contract VaderMinterUpgradeable is
             "VMU::mint: 24 Hour Limit Reached"
         );
 
-        usdv.burn(msg.sender, uAmount, vAmount, getPublicFee());
+        usdv.burn(
+            msg.sender,
+            uAmount,
+            vAmount,
+            getPublicFee(),
+            lbt.maxUpdateWindow()
+        );
         return vAmount;
     }
 
@@ -169,7 +181,13 @@ contract VaderMinterUpgradeable is
             _partnerLimits.mintLimit -= uAmount;
         }
 
-        usdv.mint(msg.sender, vAmount, uAmount, _partnerLimits.fee);
+        usdv.mint(
+            msg.sender,
+            vAmount,
+            uAmount,
+            _partnerLimits.fee,
+            lbt.maxUpdateWindow()
+        );
         return uAmount;
     }
 
@@ -201,7 +219,13 @@ contract VaderMinterUpgradeable is
             _partnerLimits.burnLimit -= vAmount;
         }
 
-        usdv.burn(msg.sender, uAmount, vAmount, _partnerLimits.fee);
+        usdv.burn(
+            msg.sender,
+            uAmount,
+            vAmount,
+            _partnerLimits.fee,
+            lbt.maxUpdateWindow()
+        );
         return vAmount;
     }
 

@@ -25,9 +25,6 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
     // The VADER token used for burns and mints
     IERC20Extended public immutable vader;
 
-    // The LBT pricing mechanism for the lockup duration
-    ILiquidityBasedTWAP public lbt;
-
     // All mint/burn locks
     mapping(address => Lock[]) public locks;
 
@@ -73,7 +70,8 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
         address account,
         uint256 vAmount,
         uint256 uAmount,
-        uint256 exchangeFee
+        uint256 exchangeFee,
+        uint256 window
     ) external onlyWhenNotLocked onlyMinter {
         require(
             vAmount != 0 && uAmount != 0,
@@ -91,7 +89,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
 
         _mint(address(this), uAmount);
 
-        _createLock(LockTypes.USDV, uAmount, account);
+        _createLock(LockTypes.USDV, uAmount, account, window);
     }
 
     /*
@@ -110,7 +108,8 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
         address account,
         uint256 uAmount,
         uint256 vAmount,
-        uint256 exchangeFee
+        uint256 exchangeFee,
+        uint256 window
     ) external onlyWhenNotLocked onlyMinter {
         require(
             uAmount != 0 && vAmount != 0,
@@ -127,7 +126,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
 
         vader.mint(address(this), vAmount);
 
-        _createLock(LockTypes.VADER, vAmount, account);
+        _createLock(LockTypes.VADER, vAmount, account, window);
     }
 
     /*
@@ -141,7 +140,10 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
         Lock memory lock = userLocks[i];
 
         require(lock.release <= block.timestamp, "USDV::claim: Vesting");
-        require(validator.isValid(msg.sender, lock.amount, lock.token), "USDV::claim: Prohibited Claim");
+        require(
+            validator.isValid(msg.sender, lock.amount, lock.token),
+            "USDV::claim: Prohibited Claim"
+        );
 
         uint256 last = userLocks.length - 1;
         if (i != last) {
@@ -177,7 +179,10 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
             Lock memory lock = userLocks[i];
 
             require(lock.release <= block.timestamp, "USDV::claimAll: Vesting");
-            require(validator.isValid(msg.sender, lock.amount, lock.token), "USDV::claimAll: Prohibited Claim");
+            require(
+                validator.isValid(msg.sender, lock.amount, lock.token),
+                "USDV::claimAll: Prohibited Claim"
+            );
 
             if (lock.token == LockTypes.USDV) {
                 _transfer(address(this), msg.sender, lock.amount);
@@ -192,21 +197,6 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
-
-    /*
-     * @dev Sets the LBTwap implementation represented by the param {_lbt}.
-     *
-     * Requirements:
-     * - Only existing owner can call this function.
-     * - Param {_lbt} cannot be a zero address.
-     **/
-    function setLBTwap(ILiquidityBasedTWAP _lbt) external onlyOwner {
-        require(
-            _lbt != ILiquidityBasedTWAP(_ZERO_ADDRESS),
-            "USDV::setLBTwap: Improper Configuration"
-        );
-        lbt = _lbt;
-    }
 
     /*
      * @dev Sets the validator implementation represented by the param {_validator}.
@@ -274,10 +264,9 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
     function _createLock(
         LockTypes lockType,
         uint256 amount,
-        address account
+        address account,
+        uint256 window
     ) private {
-        uint256 window = lbt.maxUpdateWindow();
-
         if (window != 0) {
             uint256 release = block.timestamp + window;
 
