@@ -11,8 +11,6 @@ import "../shared/ProtocolConstants.sol";
 import "../interfaces/shared/IERC20Extended.sol";
 import "../interfaces/tokens/IUSDV.sol";
 import "../interfaces/tokens/validator/IUnlockValidator.sol";
-import "../interfaces/reserve/IVaderReserve.sol";
-import "../interfaces/lbt/ILiquidityBasedTWAP.sol";
 
 contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
     /* ========== LIBRARIES ========== */

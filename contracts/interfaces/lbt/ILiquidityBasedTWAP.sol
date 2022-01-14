@@ -26,7 +26,7 @@ interface ILiquidityBasedTWAP {
 
     function previousPrices(uint256 i) external returns (uint256);
 
-    function maxUpdateWindow() external returns (uint256);
+    function maxUpdateWindow() external view returns (uint256);
 
     function getVaderPrice() external returns (uint256);
 
