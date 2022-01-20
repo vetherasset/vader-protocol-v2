@@ -1,6 +1,6 @@
 # vader-protocol-v2
 
-![vader](./doc/vader.png)
+![vader](./doc/vader.drawio.png)
 
 ## Setup
 
