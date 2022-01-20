@@ -11,6 +11,6 @@ interface IUnlockValidator {
         IUSDV.LockTypes lockType
     ) external view returns (bool);
 
-    event InValidate(address account);
+    event Invalidate(address account);
     event Validate(address account);
 }

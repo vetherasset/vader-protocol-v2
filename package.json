@@ -1,7 +1,7 @@
 {
-    "name": "vader-monorepo",
+    "name": "vader-protocol-v2",
     "version": "1.0.0",
-    "description": "The Vader monorepo",
+    "description": "Vader Protocol",
     "main": "truffle-config.js",
     "directories": {
         "test": "test"
@@ -9,18 +9,20 @@
     "scripts": {
         "test": "truffle test",
         "coverage": "truffle run coverage",
-        "compile": "rm -rf ./build && truffle compile"
+        "compile": "rm -rf ./build && truffle compile",
+        "solhint": "solhint 'contracts/**/*.sol'",
+        "lint": "prettier --write contracts/*.sol contracts/**/*.sol"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/JCRST/vader-monorepo.git"
+        "url": "git+https://github.com/vether/vader-protocol-v2.git"
     },
     "author": "",
-    "license": "ISC",
+    "license": "MIT",
     "bugs": {
-        "url": "https://github.com/JCRST/vader-monorepo/issues"
+        "url": "https://github.com/vether/vader-protocol-v2.git"
     },
-    "homepage": "https://github.com/JCRST/vader-monorepo#readme",
+    "homepage": "https://github.com/vether/vader-protocol-v2#readme",
     "dependencies": {
         "@openzeppelin/contracts": "4.3.2",
         "@openzeppelin/contracts-upgradeable": "^4.4.1",
@@ -31,8 +33,12 @@
     "devDependencies": {
         "dotenv": "^11.0.0",
         "ethers": "^5.5.1",
+        "ganache-cli": "^6.12.2",
         "keccak256": "^1.0.3",
         "merkletreejs": "^0.2.24",
+        "prettier": "^2.5.1",
+        "prettier-plugin-solidity": "^1.0.0-beta.19",
+        "solhint": "^3.3.6",
         "truffle-plugin-verify": "^0.5.20"
     }
 }

@@ -49,6 +49,14 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
     }
 
     /* ========== VIEWS ========== */
+    /*
+     * @dev Returns number of locks for {account}
+     *
+     * @param account
+     **/
+    function getLockCount(address account) external view returns (uint256) {
+        return locks[account].length;
+    }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
@@ -57,6 +65,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
      *
      * @param account is msg.sender.
      * @param exchangeFee is VaderMinterUpgradable.getPublicFee()
+     * @returns amount of USDV minted.
      *
      * Requirements:
      * - Contract is not locked.
@@ -70,10 +79,14 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
         uint256 uAmount,
         uint256 exchangeFee,
         uint256 window
-    ) external onlyWhenNotLocked onlyMinter {
+    ) external onlyWhenNotLocked onlyMinter returns (uint256) {
         require(
             vAmount != 0 && uAmount != 0,
             "USDV::mint: Zero Input / Output"
+        );
+        require(
+            window <= _MAX_LOCK_DURATION,
+            "USDV::mint: Window > max lock duration"
         );
 
         vader.transferFrom(account, address(this), vAmount);
@@ -88,6 +101,8 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
         _mint(address(this), uAmount);
 
         _createLock(LockTypes.USDV, uAmount, account, window);
+
+        return uAmount;
     }
 
     /*
@@ -95,6 +110,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
      *
      * @param account is msg.sender.
      * @param exchangeFee is VaderMinterUpgradable.getPublicFee()
+     * @returns amount of Vader minted.
      *
      * Requirements:
      * - Contract is not locked.
@@ -108,10 +124,14 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
         uint256 vAmount,
         uint256 exchangeFee,
         uint256 window
-    ) external onlyWhenNotLocked onlyMinter {
+    ) external onlyWhenNotLocked onlyMinter returns (uint256) {
         require(
             uAmount != 0 && vAmount != 0,
             "USDV::burn: Zero Input / Output"
+        );
+        require(
+            window <= _MAX_LOCK_DURATION,
+            "USDV::burn: Window > max lock duration"
         );
 
         _burn(account, uAmount);
@@ -125,6 +145,8 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
         vader.mint(address(this), vAmount);
 
         _createLock(LockTypes.VADER, vAmount, account, window);
+
+        return vAmount;
     }
 
     /*
@@ -208,6 +230,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
             _validator != IUnlockValidator(_ZERO_ADDRESS),
             "USDV::setValidator: Improper Configuration"
         );
+        emit ValidatorSet(address(validator), address(_validator));
         validator = _validator;
     }
 
@@ -220,6 +243,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
      **/
     function setGuardian(address _guardian) external onlyOwner {
         require(_guardian != address(0), "USDV::setGuardian: Zero Address");
+        emit GuardianSet(guardian, _guardian);
         guardian = _guardian;
     }
 
@@ -234,6 +258,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
             msg.sender == owner() || msg.sender == guardian,
             "USDV::setLock: Insufficient Privileges"
         );
+        emit LockStatusSet(_lock);
         isLocked = _lock;
     }
 
@@ -247,7 +272,7 @@ contract USDV is IUSDV, ProtocolConstants, ERC20, Ownable {
      **/
     function setMinter(address _minter) external onlyOwner {
         require(_minter != address(0), "USDV::setMinter: Zero address");
-        require(minter == address(0), "USDV::setMinter: Already Set");
+        emit MinterSet(_minter);
         minter = _minter;
     }
 

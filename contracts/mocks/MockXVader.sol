@@ -1,11 +1,10 @@
-// SPDX-License-Identifier: MIT AND AGPL-3.0-or-laterd
+// SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
 
 pragma solidity =0.8.9;
 
 import "../x-vader/XVader.sol";
 
 contract MockXVader is XVader {
-
     constructor(IERC20 _vader) XVader(_vader) {}
 
     function mint(address to, uint256 amount) external {

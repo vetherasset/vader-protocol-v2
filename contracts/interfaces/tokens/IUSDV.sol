@@ -26,7 +26,7 @@ interface IUSDV {
         uint256 uAmount,
         uint256 exchangeFee,
         uint256 window
-    ) external;
+    ) external returns (uint256);
 
     function burn(
         address account,
@@ -34,7 +34,7 @@ interface IUSDV {
         uint256 vAmount,
         uint256 exchangeFee,
         uint256 window
-    ) external;
+    ) external returns (uint256);
 
     /* ========== EVENTS ========== */
 
@@ -52,4 +52,8 @@ interface IUSDV {
         uint256 lockAmount,
         uint256 lockRelease
     );
+    event ValidatorSet(address previous, address current);
+    event GuardianSet(address previous, address current);
+    event LockStatusSet(bool status);
+    event MinterSet(address minter);
 }

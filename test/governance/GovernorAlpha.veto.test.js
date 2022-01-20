@@ -100,7 +100,7 @@ contract("GovernorAlpha.veto", (accounts) => {
         );
     });
 
-    it("fails to veto a proposal having action for Governance contract itself", async function () {
+    it("fails to veto a proposal for changing council", async function () {
         const { signatures, targetAddresses, values, calldatas } =
             this.targetsData;
 
@@ -110,11 +110,25 @@ contract("GovernorAlpha.veto", (accounts) => {
         ];
         _targetAddresses.shift();
 
+        const _calldatas = [
+            ...calldatas,
+            web3.eth.abi.encodeParameters(
+                [
+                    'bytes4',
+                    'address'
+                ],
+                [
+                    web3.utils.keccak256('changeCouncil(address)').slice(0, 10),
+                    accounts.account5
+                ])
+        ];
+        _calldatas.shift();
+
         await this.governorAlpha.propose(
             _targetAddresses,
             values,
             signatures,
-            calldatas,
+            _calldatas,
             description
         );
 
@@ -124,7 +138,7 @@ contract("GovernorAlpha.veto", (accounts) => {
 
         await assertErrors(
             this.governorAlpha.veto(3, true),
-            "council cannot veto on proposal having action with address(this) as target"
+            "GovernorAlpha::veto: council cannot veto a council changing proposal"
         );
     });
 

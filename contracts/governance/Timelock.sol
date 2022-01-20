@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT AND AGPL-3.0-or-laterD
+// SPDX-License-Identifier: MIT AND AGPL-3.0-or-later
 pragma solidity =0.8.9;
 
 import "../interfaces/governance/ITimelock.sol";
@@ -259,7 +259,7 @@ contract Timelock is ITimelock {
     function executeTransaction(
         address target,
         uint256 value,
-       // C4-Audit Fix for Issue # 207
+        // C4-Audit Fix for Issue # 207
         string calldata signature,
         bytes calldata data,
         uint256 eta

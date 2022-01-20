@@ -55,13 +55,8 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
      * is retrieved from {VaderPoolV2} contract.
      **/
     constructor(IVaderPoolV2 _pool) {
-        require(
-            _pool != IVaderPoolV2(_ZERO_ADDRESS),
-            "VaderRouterV2::constructor: Incorrect Arguments"
-        );
-
         pool = _pool;
-        nativeAsset = pool.nativeAsset();
+        nativeAsset = _pool.nativeAsset();
     }
 
     /* ========== VIEWS ========== */
@@ -182,7 +177,7 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
         address to,
         uint256 deadline
     )
-        public
+        external
         override
         ensure(deadline)
         returns (uint256 amountA, uint256 amountB)
@@ -347,7 +342,7 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     /*
-     * @dev Sets the reserve address and renounces contract's ownership.
+     * @dev Sets the reserve address only once.
      *
      * Requirements:
      * - Only existing owner can call this function.
@@ -357,6 +352,10 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
         require(
             _reserve != IVaderReserve(_ZERO_ADDRESS),
             "VaderRouterV2::initialize: Incorrect Reserve Specified"
+        );
+        require(
+            reserve == IVaderReserve(_ZERO_ADDRESS),
+            "VaderRouterV2::initialize: Already Initialized"
         );
 
         reserve = _reserve;
@@ -412,7 +411,8 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
             require(
                 path[0] != path[1] &&
                     path[1] == pool.nativeAsset() &&
-                    path[2] != path[1],
+                    path[2] != path[1] &&
+                    path[0] != path[2],
                 "VaderRouterV2::_swap: Incorrect Path"
             );
 

@@ -36,7 +36,7 @@ contract UnlockValidator is IUnlockValidator, Ownable {
             "UnlockValidator::invalidate: Already Invalid"
         );
         _isInvalidated[_account] = true;
-        emit InValidate(_account);
+        emit Invalidate(_account);
     }
 
     /*

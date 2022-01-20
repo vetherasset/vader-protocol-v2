@@ -117,10 +117,7 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
 
         _vest.begin(vesters, amounts);
 
-        emit ProtocolInitialized(
-            address(_converter),
-            address(_vest)
-        );
+        emit ProtocolInitialized(address(_converter), address(_vest));
     }
 
     /**
@@ -134,8 +131,14 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * - USDV must not be set
      */
     function setUSDV(IUSDV _usdv) external onlyOwner {
-        require(_usdv != IUSDV(_ZERO_ADDRESS), "Vader::setUSDV: Invalid USDV address");
-        require(usdv == IUSDV(_ZERO_ADDRESS), "Vader::setUSDV: USDV already set");
+        require(
+            _usdv != IUSDV(_ZERO_ADDRESS),
+            "Vader::setUSDV: Invalid USDV address"
+        );
+        require(
+            usdv == IUSDV(_ZERO_ADDRESS),
+            "Vader::setUSDV: USDV already set"
+        );
 
         usdv = _usdv;
         emit USDVSet(address(_usdv));
@@ -153,7 +156,10 @@ contract Vader is IVader, ProtocolConstants, ERC20, Ownable {
      * - the token must hold sufficient Vader allocation for the grant
      * - the grant must be of a non-zero amount
      */
-    function claimGrant(address beneficiary, uint256 amount) external onlyOwner {
+    function claimGrant(address beneficiary, uint256 amount)
+        external
+        onlyOwner
+    {
         require(amount != 0, "Vader::claimGrant: Non-Zero Amount Required");
         emit GrantClaimed(beneficiary, amount);
         _transfer(address(this), beneficiary, amount);

@@ -29,10 +29,8 @@ contract XVader is ProtocolConstants, ERC20Votes {
         uint256 totalShares = totalSupply();
 
         uint256 xVADERToMint = totalShares == 0 || totalVader == 0 // If no xVader exists, mint it 1:1 to the amount put in
-            ? _amount // Calculate and mint the amount of xVader the vader is worth.
-            : // The ratio will change overtime, as xVader is burned/minted and
-            // vader deposited + gained from fees / withdrawn.
-            (_amount * totalShares) / totalVader;
+            ? _amount // Calculate and mint the amount of xVader the vader is worth. // The ratio will change overtime, as xVader is burned/minted and // vader deposited + gained from fees / withdrawn.
+            : (_amount * totalShares) / totalVader;
 
         _mint(msg.sender, xVADERToMint);
 

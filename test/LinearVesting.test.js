@@ -19,7 +19,7 @@ const {
     PROJECT_CONSTANTS,
 } = require("./utils")(artifacts);
 
-contract.only("LinearVesting", (accounts) => {
+contract("LinearVesting", (accounts) => {
     describe("construction", () => {
         it("should prevent deployment with an invalid Converter address", async () => {
             if (Array.isArray(accounts))
@@ -46,8 +46,11 @@ contract.only("LinearVesting", (accounts) => {
         });
 
         it("should deploy the LinearVesting contract with a correct state", async () => {
-            const { vader, vesting, converter } = await deployMock(accounts);
-            await converter.setVesting(vesting.address);
+            const { vader, vesting, converter, ADMINISTRATOR } =
+                await deployMock(accounts);
+            await converter.setVesting(vesting.address, {
+                from: ADMINISTRATOR.from,
+            });
             assert.ok(vesting.address);
 
             assert.equal(await vesting.owner(), vader.address);

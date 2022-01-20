@@ -12,7 +12,7 @@ import "../external/libraries/FixedPoint.sol";
 /**
  * @notice Return absolute value of |x - y|
  */
-function abs(uint x, uint y) pure returns (uint) {
+function abs(uint256 x, uint256 y) pure returns (uint256) {
     if (x >= y) {
         return x - y;
     }
@@ -26,10 +26,10 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
     using FixedPoint for FixedPoint.uq144x112;
 
     struct ExchangePair {
-        uint nativeTokenPriceCumulative;
+        uint256 nativeTokenPriceCumulative;
         FixedPoint.uq112x112 nativeTokenPriceAverage;
-        uint lastMeasurement;
-        uint updatePeriod;
+        uint256 lastMeasurement;
+        uint256 updatePeriod;
         // true if token0 = vader
         bool isFirst;
     }
@@ -37,11 +37,11 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
     event SetOracle(address oracle);
 
     // 1 Vader = 1e18
-    uint private constant ONE_VADER = 1e18;
+    uint256 private constant ONE_VADER = 1e18;
     // Denominator to calculate difference in Vader / ETH TWAP and spot price.
-    uint private constant MAX_PRICE_DIFF_DENOMINATOR = 1e5;
+    uint256 private constant MAX_PRICE_DIFF_DENOMINATOR = 1e5;
     // max for maxUpdateWindow
-    uint private constant MAX_UPDATE_WINDOW = 30 days;
+    uint256 private constant MAX_UPDATE_WINDOW = 30 days;
 
     /* ========== STATE VARIABLES ========== */
     address public immutable vader;
@@ -49,20 +49,20 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
     IUniswapV2Pair public immutable pair;
     // Set to pairData.updatePeriod.
     // maxUpdateWindow is called by other contracts.
-    uint public maxUpdateWindow;
+    uint256 public maxUpdateWindow;
     ExchangePair public pairData;
     IAggregatorV3 public oracle;
     // Numberator to calculate max allowed difference between Vader / ETH TWAP
     // and spot price.
     // maxPriceDiff must be initialized to MAX_PRICE_DIFF_DENOMINATOR and kept
     // until TWAP price is close to spot price for _updateVaderPrice to not fail.
-    uint public maxPriceDiff = MAX_PRICE_DIFF_DENOMINATOR;
+    uint256 public maxPriceDiff = MAX_PRICE_DIFF_DENOMINATOR;
 
     constructor(
         address _vader,
         IUniswapV2Pair _pair,
         IAggregatorV3 _oracle,
-        uint _updatePeriod
+        uint256 _updatePeriod
     ) {
         require(_vader != address(0), "vader = 0 address");
         vader = _vader;
@@ -77,34 +77,34 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
      * @notice Get Vader USD price calculated from Vader / ETH price from
      *         last update.
      **/
-    function getStaleVaderPrice() external view returns (uint) {
+    function getStaleVaderPrice() external view returns (uint256) {
         return _calculateVaderPrice();
     }
 
     /**
      * @notice Get ETH / USD price from Chainlink. 1 USD = 1e8.
      **/
-    function getChainlinkPrice() public view returns (uint) {
-        (uint80 roundID, int price, , , uint80 answeredInRound) = oracle
+    function getChainlinkPrice() public view returns (uint256) {
+        (uint80 roundID, int256 price, , , uint80 answeredInRound) = oracle
             .latestRoundData();
         require(answeredInRound >= roundID, "stale Chainlink price");
         require(price > 0, "chainlink price = 0");
-        return uint(price);
+        return uint256(price);
     }
 
     /**
      * @notice Helper function to decode and return Vader / ETH TWAP price
      **/
-    function getVaderEthPriceAverage() public view returns (uint) {
+    function getVaderEthPriceAverage() public view returns (uint256) {
         return pairData.nativeTokenPriceAverage.mul(ONE_VADER).decode144();
     }
 
     /**
      * @notice Helper function to decode and return Vader / ETH spot price
      **/
-    function getVaderEthSpotPrice() public view returns (uint) {
-        (uint reserve0, uint reserve1, ) = pair.getReserves();
-        (uint vaderReserve, uint ethReserve) = pairData.isFirst
+    function getVaderEthSpotPrice() public view returns (uint256) {
+        (uint256 reserve0, uint256 reserve1, ) = pair.getReserves();
+        (uint256 vaderReserve, uint256 ethReserve) = pairData.isFirst
             ? (reserve0, reserve1)
             : (reserve1, reserve0);
         return
@@ -122,7 +122,7 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
     **/
     // NOTE: Fails until _updateVaderPrice is called atlease twice for
     // nativeTokenPriceAverage to be > 0
-    function getVaderPrice() external returns (uint) {
+    function getVaderPrice() external returns (uint256) {
         _updateVaderPrice();
         return _calculateVaderPrice();
     }
@@ -138,17 +138,19 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
      * @notice Update Vader / ETH price.
      **/
     function _updateVaderPrice() private {
-        uint timeElapsed = block.timestamp - pairData.lastMeasurement;
+        uint256 timeElapsed = block.timestamp - pairData.lastMeasurement;
         // NOTE: save gas and re-entrancy protection.
         if (timeElapsed < pairData.updatePeriod) return;
         bool isFirst = pairData.isFirst;
         (
-            uint price0Cumulative,
-            uint price1Cumulative,
-            uint currentMeasurement
+            uint256 price0Cumulative,
+            uint256 price1Cumulative,
+            uint256 currentMeasurement
         ) = UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
-        uint priceCumulativeEnd = isFirst ? price0Cumulative : price1Cumulative;
-        uint priceCumulativeStart = pairData.nativeTokenPriceCumulative;
+        uint256 priceCumulativeEnd = isFirst
+            ? price0Cumulative
+            : price1Cumulative;
+        uint256 priceCumulativeStart = pairData.nativeTokenPriceCumulative;
         require(
             priceCumulativeEnd >= priceCumulativeStart,
             "price cumulative end < start"
@@ -170,8 +172,8 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
             // d = max price diff
             // D = MAX_PRICE_DIFF_DENOMINATOR
             // |p - s| / p <= d / D
-            uint twapPrice = getVaderEthPriceAverage();
-            uint spotPrice = getVaderEthSpotPrice();
+            uint256 twapPrice = getVaderEthPriceAverage();
+            uint256 spotPrice = getVaderEthSpotPrice();
             require(twapPrice > 0, "TWAP = 0");
             require(spotPrice > 0, "spot price = 0");
             // NOTE: if maxPriceDiff = 0, then this check will most likely fail
@@ -187,11 +189,15 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
     /**
      * @notice Calculates Vader price in USD, 1 USD = 1e18.
      **/
-    function _calculateVaderPrice() private view returns (uint vaderUsdPrice) {
+    function _calculateVaderPrice()
+        private
+        view
+        returns (uint256 vaderUsdPrice)
+    {
         // USD / ETH, 8 decimals
-        uint usdPerEth = getChainlinkPrice();
+        uint256 usdPerEth = getChainlinkPrice();
         // ETH / Vader, 18 decimals
-        uint ethPerVader = pairData
+        uint256 ethPerVader = pairData
             .nativeTokenPriceAverage
             .mul(ONE_VADER)
             .decode144();
@@ -210,7 +216,7 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
     function _addVaderPair(
         address _vader,
         IUniswapV2Pair _pair,
-        uint _updatePeriod
+        uint256 _updatePeriod
     ) private {
         require(_updatePeriod != 0, "update period = 0");
         bool isFirst = _pair.token0() == _vader;
@@ -239,13 +245,13 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
      * @notice Set updatePeriod.
      * @param _updatePeriod New update period for Vader / ETH TWAP
      **/
-    function _setUpdatePeriod(uint _updatePeriod) private {
+    function _setUpdatePeriod(uint256 _updatePeriod) private {
         require(_updatePeriod <= MAX_UPDATE_WINDOW, "update period > max");
         pairData.updatePeriod = _updatePeriod;
         maxUpdateWindow = _updatePeriod;
     }
 
-    function setUpdatePeriod(uint _updatePeriod) external onlyOwner {
+    function setUpdatePeriod(uint256 _updatePeriod) external onlyOwner {
         _setUpdatePeriod(_updatePeriod);
     }
 
@@ -254,7 +260,7 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
      * @param _maxPriceDiff Numberator to calculate max allowed difference
      *        between Vader / ETH TWAP and spot price.
      **/
-    function _setMaxPriceDiff(uint _maxPriceDiff) private {
+    function _setMaxPriceDiff(uint256 _maxPriceDiff) private {
         require(
             _maxPriceDiff <= MAX_PRICE_DIFF_DENOMINATOR,
             "price diff > max"
@@ -262,7 +268,7 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
         maxPriceDiff = _maxPriceDiff;
     }
 
-    function setMaxPriceDiff(uint _maxPriceDiff) external onlyOwner {
+    function setMaxPriceDiff(uint256 _maxPriceDiff) external onlyOwner {
         _setMaxPriceDiff(_maxPriceDiff);
     }
 
@@ -271,7 +277,7 @@ contract UniswapTwap is IUniswapTWAP, Ownable {
      *         from Vader / ETH spot price.
      */
     function forceUpdateVaderPrice() external onlyOwner {
-        uint _maxPriceDiff = maxPriceDiff;
+        uint256 _maxPriceDiff = maxPriceDiff;
         _setMaxPriceDiff(MAX_PRICE_DIFF_DENOMINATOR);
         _updateVaderPrice();
         _setMaxPriceDiff(_maxPriceDiff);

@@ -22,7 +22,7 @@ const {
     PROJECT_CONSTANTS,
 } = require("./utils")(artifacts);
 
-contract.only("Vader", (accounts) => {
+contract("Vader", (accounts) => {
     describe("construction", () => {
         it("should deploy the Vader contract with a correct state", async () => {
             if (Array.isArray(accounts))

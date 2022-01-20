@@ -4,12 +4,16 @@ const {
 
 module.exports = (artifacts) => {
     // Mocks
+    const Mock = artifacts.require("Mock");
     const MockToken = artifacts.require("MockToken");
     const MockConstants = artifacts.require("MockConstants");
     const GovernorAlpha = artifacts.require("MockGovernorAlpha");
+    const MockUSDV = artifacts.require("MockUSDV");
+    const MockVader = artifacts.require("MockVader");
     const MockXVader = artifacts.require("MockXVader");
     const Timelock = artifacts.require("MockTimelock");
     const MockAggregatorV3 = artifacts.require("MockAggregatorV3");
+    const MockLBT = artifacts.require("MockLBT");
     const MockUniswapV2Factory = artifacts.require("MockUniswapV2Factory");
     const MockUniswapV2Router = artifacts.require("MockUniswapV2Router");
     const MockMTree = artifacts.require("MockMTree");
@@ -17,13 +21,11 @@ module.exports = (artifacts) => {
     // Project Contracts
     const Vader = artifacts.require("Vader");
     const VaderReserve = artifacts.require("VaderReserve");
-    const VaderPoolFactory = artifacts.require("VaderPoolFactory");
-    const VaderPool = artifacts.require("VaderPool");
-    const VaderRouter = artifacts.require("VaderRouter");
     const USDV = artifacts.require("USDV");
     const Converter = artifacts.require("Converter");
     const LinearVesting = artifacts.require("LinearVesting");
-    const BasePool = artifacts.require("BasePool");
+    const VaderMinter = artifacts.require("VaderMinterUpgradeable");
+    const UnlockValidator = artifacts.require("UnlockValidator");
 
     // V2
     const VaderRouterV2 = artifacts.require("VaderRouterV2");
@@ -33,9 +35,10 @@ module.exports = (artifacts) => {
     const SynthFactory = artifacts.require("SynthFactory");
     const LPToken = artifacts.require("LPToken");
     const LPWrapper = artifacts.require("LPWrapper");
-    const TWAP = artifacts.require("TwapOracle");
+    // const TWAP = artifacts.require("TwapOracle");
     const XVader = artifacts.require("XVader");
     const UniswapV2Pair = artifacts.require("UniswapV2Pair");
+    const LBTwap = artifacts.require("LiquidityBasedTWAP.sol");
 
     // Libraries
     const VaderMath = artifacts.require("VaderMath");
@@ -146,6 +149,7 @@ module.exports = (artifacts) => {
             "account3",
             "account4",
             "account5",
+            "account6",
             "dao",
             "administrator",
             "voter",
@@ -188,12 +192,11 @@ module.exports = (artifacts) => {
 
     const DEFAULT_CONFIGS = {
         Vader: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
-        VaderPoolFactory: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
-        VaderRouter: (_, { factory }) => [factory.address],
         VaderReserve: (_, { vader }) => [vader.address],
-        USDV: (_, { vader, reserve, ADMINISTRATOR }) => [
-            vader.address,
-            reserve.address,
+        USDV: (_, { vader, ADMINISTRATOR }) => [vader.address, ADMINISTRATOR],
+        UnlockValidator: (_, { ADMINISTRATOR }) => [ADMINISTRATOR],
+        VaderMinter: (_, { usdv, ADMINISTRATOR }) => [
+            usdv.address,
             ADMINISTRATOR,
         ],
         Converter: (_, { vader, vether, ADMINISTRATOR }) => [
@@ -221,11 +224,11 @@ module.exports = (artifacts) => {
             governorAlpha.address,
             big(10 * 60), // default delay of 10 minutes
         ],
-        VaderPoolV2: (_, { mockUsdv }) => [true, mockUsdv.address],
+        VaderPoolV2: (_, { usdv }) => [true, usdv.address],
         VaderRouterV2: (_, { poolV2 }) => [poolV2.address],
         LPWrapper: (_, { poolV2 }) => [poolV2.address],
         SynthFactory: (_, { poolV2 }) => [poolV2.address],
-        TWAP: (_, { poolV2 }) => [poolV2.address, big(1)],
+        LBTwap: (_, { vader, poolV2 }) => [vader.address, poolV2.address],
         XVader: (_, { vader }) => [vader.address],
         MockUniswapV2Factory: ({ account0 }, _) => [account0],
         MockUniswapV2Router: (_, { mockUniswapV2Factory, weth }) => [
@@ -250,8 +253,6 @@ module.exports = (artifacts) => {
     // Used to Link Libraries
     const link = async () => {
         const vaderMath = await VaderMath.new();
-        await VaderPoolFactory.link("VaderMath", vaderMath.address);
-        await VaderRouter.link("VaderMath", vaderMath.address);
         await VaderPoolV2.link("VaderMath", vaderMath.address);
     };
 
@@ -301,8 +302,11 @@ module.exports = (artifacts) => {
         };
 
         // Mock Deployments
+        cached.mock = await Mock.new();
         cached.vether = await MockToken.new("Vether", "VETH", 18);
-        cached.mockUsdv = await MockToken.new("Fake USDV", "USDV", 18);
+        cached.mockUsdv = await MockUSDV.new();
+        cached.mockVader = await MockVader.new();
+        cached.mockLbt = await MockLBT.new();
         cached.dai = await MockToken.new("DAI", "DAI", 18);
         cached.token = await MockToken.new("TKN", "TKN", 18);
         cached.erc20Dec8 = await MockToken.new("DEC8", "DEC8", 8);
@@ -313,19 +317,19 @@ module.exports = (artifacts) => {
         // Project Deployments
         cached.vader = await Vader.new(...configs.Vader(accounts, cached));
 
-        cached.factory = await VaderPoolFactory.new(
-            ...configs.VaderPoolFactory(accounts, cached)
-        );
-
-        cached.router = await VaderRouter.new(
-            ...configs.VaderRouter(accounts, cached)
-        );
-
         cached.reserve = await VaderReserve.new(
             ...configs.VaderReserve(accounts, cached)
         );
 
         cached.usdv = await USDV.new(...configs.USDV(accounts, cached));
+
+        cached.validator = await UnlockValidator.new(
+            ...configs.UnlockValidator(accounts, cached)
+        );
+
+        cached.vaderMinter = await VaderMinter.new(
+            ...configs.VaderMinter(accounts, cached)
+        );
 
         cached.converter = await Converter.new(
             ...configs.Converter(accounts, cached)
@@ -360,7 +364,7 @@ module.exports = (artifacts) => {
             ...configs.SynthFactory(accounts, cached)
         );
 
-        cached.twap = await TWAP.new(...configs.TWAP(accounts, cached));
+        cached.lbtwap = await LBTwap.new(...configs.LBTwap(accounts, cached));
 
         cached.xVader = await XVader.new(...configs.XVader(accounts, cached));
 
@@ -415,8 +419,6 @@ module.exports = (artifacts) => {
         // Project Specific Constants
         PROJECT_CONSTANTS,
         DEFAULT_CONFIGS,
-        VaderPool,
-        BasePool,
         BasePoolV2,
         Synth,
         LPToken,

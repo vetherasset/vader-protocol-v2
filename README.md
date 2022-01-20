@@ -14,9 +14,14 @@ cp .env.sample .env
 
 ## Test
 
-```
+```shell
 npx ganache-cli
-npm test
+npx truffle test
+
+# prettier
+npm run lint
+# solhint
+npm run solhint
 ```
 
 ## Deploy

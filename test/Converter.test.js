@@ -20,7 +20,10 @@ const {
 const keccak256 = require("keccak256");
 const { MerkleTree } = require("merkletreejs");
 
-contract.only("Converter", (accounts) => {
+const salt = 123;
+const chainId = 1337;
+
+contract("Converter", (accounts) => {
     describe("construction", () => {
         it("should prevent deployment of the converter with a zero address Vether / Vader contract", async () => {
             if (Array.isArray(accounts))
@@ -30,8 +33,8 @@ contract.only("Converter", (accounts) => {
             const data = await mockMTree.getRoot(
                 accounts.account0,
                 TEN_UNITS,
-                123,
-                1337
+                salt,
+                chainId
             );
 
             const tree = new MerkleTree([data], keccak256, {
@@ -47,7 +50,7 @@ contract.only("Converter", (accounts) => {
                         UNSET_ADDRESS,
                         accounts.account0,
                         merkelRoot,
-                        123,
+                        salt,
                     ],
                 }),
                 "Converter::constructor: Misconfiguration"
@@ -59,7 +62,7 @@ contract.only("Converter", (accounts) => {
                         accounts.account0,
                         UNSET_ADDRESS,
                         merkelRoot,
-                        123,
+                        salt,
                     ],
                 }),
                 "Converter::constructor: Misconfiguration"
@@ -128,8 +131,8 @@ contract.only("Converter", (accounts) => {
             const data = await mockMTree.getRoot(
                 accounts.account0,
                 TEN_UNITS,
-                123,
-                1337
+                salt,
+                chainId
             );
             const tree = new MerkleTree([data], keccak256, {
                 hashLeaves: true,
@@ -144,7 +147,7 @@ contract.only("Converter", (accounts) => {
                         vether.address,
                         vader.address,
                         merkelRoot,
-                        123, // salt
+                        salt,
                         ADMINISTRATOR,
                     ],
                 });

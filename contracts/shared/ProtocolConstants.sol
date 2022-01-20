@@ -40,6 +40,11 @@ abstract contract ProtocolConstants {
     // Fee Basis Points
     uint256 internal constant _MAX_FEE_BASIS_POINTS = 1_00;
 
+    /* ========== USDV TOKEN ========== */
+
+    // Max locking duration
+    uint256 internal constant _MAX_LOCK_DURATION = 30 days;
+
     /* ========== VESTING ========== */
 
     // Vesting Duration

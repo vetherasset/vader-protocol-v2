@@ -2,15 +2,9 @@
 
 pragma solidity =0.8.9;
 
+import {Limits} from "../../../lbt/minter/VaderMinterStorage.sol";
+
 interface IVaderMinterUpgradeable {
-    /* ========== STRUCTS ========== */
-
-    struct Limits {
-        uint256 fee;
-        uint256 mintLimit;
-        uint256 burnLimit;
-    }
-
     /* ========== FUNCTIONS ========== */
     function mint(uint256 vAmount, uint256 uAmountMinOut)
         external
@@ -20,31 +14,11 @@ interface IVaderMinterUpgradeable {
         external
         returns (uint256 vAmount);
 
-    function partnerMint(uint256 vAmount) external returns (uint256 uAmount);
+    function partnerMint(uint256 vAmount, uint256 uAmountMinOut) external returns (uint256 uAmount);
 
-    function partnerBurn(uint256 uAmount) external returns (uint256 vAmount);
+    function partnerBurn(uint256 uAmount, uint256 vAmountMinOut) external returns (uint256 vAmount);
 
     /* ========== EVENTS ========== */
-
-    event PublicMintCapChanged(
-        uint256 previousPublicMintCap,
-        uint256 publicMintCap
-    );
-
-    event PublicMintFeeChanged(
-        uint256 previousPublicMintFee,
-        uint256 publicMintFee
-    );
-
-    event PartnerMintCapChanged(
-        uint256 previousPartnerMintCap,
-        uint256 partnerMintCap
-    );
-
-    event PartnerMintFeeChanged(
-        uint256 previousPartnercMintFee,
-        uint256 partnerMintFee
-    );
 
     event DailyLimitsChanged(Limits previousLimits, Limits nextLimits);
     event WhitelistPartner(
@@ -53,4 +27,11 @@ interface IVaderMinterUpgradeable {
         uint256 burnLimit,
         uint256 fee
     );
+    event RemovePartner(address partner);
+    event SetPartnerFee(address indexed partner, uint fee);
+    event IncreasePartnerMintLimit(address indexed partner, uint mintLimit);
+    event DecreasePartnerMintLimit(address indexed partner, uint mintLimit);
+    event IncreasePartnerBurnLimit(address indexed partner, uint burnLimit);
+    event DecreasePartnerBurnLimit(address indexed partner, uint burnLimit);
+    event SetPartnerLockDuration(address indexed partner, uint lockDuration);
 }
