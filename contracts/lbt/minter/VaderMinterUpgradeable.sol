@@ -63,6 +63,7 @@ contract VaderMinterUpgradeable is
         if (cycleTimestamp <= block.timestamp) {
             cycleTimestamp = block.timestamp + 24 hours;
             cycleMints = uAmount;
+            cycleBurns = 0;
         } else {
             cycleMints += uAmount;
         }
@@ -107,6 +108,7 @@ contract VaderMinterUpgradeable is
         if (cycleTimestamp <= block.timestamp) {
             cycleTimestamp = block.timestamp + 24 hours;
             cycleBurns = uAmount;
+            cycleMints = 0;
         } else {
             cycleBurns += uAmount;
         }
