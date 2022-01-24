@@ -445,7 +445,7 @@ contract VaderMinterUpgradeable is
     function setLBT(ILiquidityBasedTWAP _lbt) external onlyOwner {
         require(
             _lbt != ILiquidityBasedTWAP(address(0)),
-            "VMU::setLBT: Insufficient Privileges"
+            "VMU::setLBT: Zero Address"
         );
         lbt = _lbt;
     }
