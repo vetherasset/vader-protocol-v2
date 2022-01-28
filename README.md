@@ -43,6 +43,10 @@ npx truffle run verify MyContract --network kovan
 -   Vader: 0x2602278EE1882889B946eb11DC0E810075650983
 -   Converter: 0x6D4a43Ee4770a2Bab97460d3a3B783641D85d108
 -   LinearVesting: 0xb3C600C04AaF603b0f422b73Db244216C2e491f6
+-   USDV: 0xea3Fb6f331735252E7Bfb0b24b3B761301293DBe
+-   UnlockValidator: 0xfcC4bCB2924ee4a0334A5B0b2C6ad893E8Ad3337
+-   TWAP: 0x6a81be7f5c868f34f109d5b5f38ed67f3395f7b0
+-   Minter:
 
 ### Kovan
 
