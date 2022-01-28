@@ -43,7 +43,7 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
     // Address of reserve contract.
     IVaderReserve public reserve;
 
-    // Denotes what pairs are actively supported for synths and IL.
+    // Denotes what pairs are actively supported for IL.
     mapping(IERC20 => bool) public permissionedPairs;
 
     /* ========== CONSTRUCTOR ========== */
@@ -242,48 +242,6 @@ contract VaderRouterV2 is IVaderRouterV2, ProtocolConstants, Ownable {
             amountOut >= amountOutMin,
             "VaderRouterV2::swapExactTokensForTokens: Insufficient Trade Output"
         );
-    }
-
-    /*
-     * @dev Allows minting of synthetic assets corresponding to the {foreignAsset} based
-     * on the native asset amount deposited and returns the minted synth asset amount.
-     *
-     * Creates the synthetic asset against {foreignAsset} if it does not already exist.
-     *
-     * Updates the cumulative prices for native and foreign assets.
-     *
-     * Requirements:
-     * - {foreignAsset} must be a supported token.
-     **/
-    function mintSynth(
-        IERC20 foreignAsset,
-        uint256 nativeDeposit,
-        address from,
-        address to
-    ) external returns (uint256) {
-        require(
-            permissionedPairs[foreignAsset],
-            "VaderRouterV2::mintSynth: Unsupported Asset"
-        );
-        return pool.mintSynth(foreignAsset, nativeDeposit, from, to);
-    }
-
-    /*
-     * @dev Allows burning of synthetic assets corresponding to the {foreignAsset}
-     * and returns the redeemed amount of native asset.
-     *
-     * Updates the cumulative prices for native and foreign assets.
-     *
-     * Requirements:
-     * - {foreignAsset} must have a valid synthetic asset against it.
-     * - {synthAmount} must be greater than zero.
-     **/
-    function burnSynth(
-        IERC20 foreignAsset,
-        uint256 synthAmount,
-        address to
-    ) external returns (uint256) {
-        return pool.burnSynth(foreignAsset, synthAmount, to);
     }
 
     /*

@@ -20,19 +20,6 @@ interface IVaderPoolV2 is IBasePoolV2, IERC721 {
             uint32 blockTimestampLast
         );
 
-    function mintSynth(
-        IERC20 foreignAsset,
-        uint256 nativeDeposit,
-        address from,
-        address to
-    ) external returns (uint256 amountSynth);
-
-    function burnSynth(
-        IERC20 foreignAsset,
-        uint256 synthAmount,
-        address to
-    ) external returns (uint256 amountNative);
-
     function mintFungible(
         IERC20 foreignAsset,
         uint256 nativeDeposit,

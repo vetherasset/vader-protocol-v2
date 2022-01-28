@@ -10,7 +10,6 @@ import "../../external/libraries/FixedPoint.sol";
 import "../../interfaces/shared/IERC20Extended.sol";
 import "../../interfaces/dex-v2/pool/IVaderPoolV2.sol";
 import "../../interfaces/dex-v2/wrapper/ILPWrapper.sol";
-import "../../interfaces/dex-v2/synth/ISynthFactory.sol";
 
 /*
  * @dev Implementation of {VaderPoolV2} contract.
@@ -33,9 +32,6 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
 
     // The LP wrapper contract
     ILPWrapper public wrapper;
-
-    // The Synth Factory
-    ISynthFactory public synthFactory;
 
     // Denotes whether the queue system is active
     bool public queueActive;
@@ -105,7 +101,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /*
-     * @dev Initializes contract's state with LP wrapper, synth factory
+     * @dev Initializes contract's state with LP wrapper,
      * and router addresses.
      *
      * Requirements:
@@ -113,11 +109,10 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
      * - The parameters are not already set.
      * - Only callable by contract owner.
      **/
-    function initialize(
-        ILPWrapper _wrapper,
-        ISynthFactory _synthFactory,
-        address _router
-    ) external onlyOwner {
+    function initialize(ILPWrapper _wrapper, address _router)
+        external
+        onlyOwner
+    {
         require(
             wrapper == ILPWrapper(_ZERO_ADDRESS),
             "VaderPoolV2::initialize: Already initialized"
@@ -126,124 +121,14 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
             _wrapper != ILPWrapper(_ZERO_ADDRESS),
             "VaderPoolV2::initialize: Incorrect Wrapper Specified"
         );
-        require(
-            _synthFactory != ISynthFactory(_ZERO_ADDRESS),
-            "VaderPoolV2::initialize: Incorrect SynthFactory Specified"
-        );
+
         require(
             _router != _ZERO_ADDRESS,
             "VaderPoolV2::initialize: Incorrect Router Specified"
         );
         wrapper = _wrapper;
-        synthFactory = _synthFactory;
+
         router = _router;
-    }
-
-    /*
-     * @dev Allows minting of synthetic assets corresponding to the {foreignAsset} based
-     * on the native asset amount deposited and returns the minted synth asset amount.
-     *
-     * Creates the synthetic asset against {foreignAsset} if it does not already exist.
-     *
-     * Updates the cumulative prices for native and foreign assets.
-     *
-     * Requirements:
-     * - only router can call this function.
-     * - {foreignAsset} must be a supported token.
-     **/
-    function mintSynth(
-        IERC20 foreignAsset,
-        uint256 nativeDeposit,
-        address from,
-        address to
-    )
-        external
-        override
-        nonReentrant
-        supportedToken(foreignAsset)
-        onlyRouter
-        returns (uint256 amountSynth)
-    {
-        nativeAsset.safeTransferFrom(from, address(this), nativeDeposit);
-
-        ISynth synth = synthFactory.synths(foreignAsset);
-
-        if (synth == ISynth(_ZERO_ADDRESS))
-            synth = synthFactory.createSynth(
-                IERC20Extended(address(foreignAsset))
-            );
-
-        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
-            foreignAsset
-        ); // gas savings
-
-        amountSynth = VaderMath.calculateSwap(
-            nativeDeposit,
-            reserveNative,
-            reserveForeign
-        );
-
-        _update(
-            foreignAsset,
-            reserveNative + nativeDeposit,
-            reserveForeign,
-            reserveNative,
-            reserveForeign
-        );
-
-        synth.mint(to, amountSynth);
-    }
-
-    /*
-     * @dev Allows burning of synthetic assets corresponding to the {foreignAsset}
-     * and returns the redeemed amount of native asset.
-     *
-     * Updates the cumulative prices for native and foreign assets.
-     *
-     * Requirements:
-     * - only router can call this function.
-     * - {foreignAsset} must have a valid synthetic asset against it.
-     * - {synthAmount} must be greater than zero.
-     **/
-    function burnSynth(
-        IERC20 foreignAsset,
-        uint256 synthAmount,
-        address to
-    ) external override nonReentrant onlyRouter returns (uint256 amountNative) {
-        ISynth synth = synthFactory.synths(foreignAsset);
-
-        require(
-            synth != ISynth(_ZERO_ADDRESS),
-            "VaderPoolV2::burnSynth: Inexistent Synth"
-        );
-
-        require(
-            synthAmount > 0,
-            "VaderPoolV2::burnSynth: Insufficient Synth Amount"
-        );
-
-        IERC20(synth).safeTransferFrom(msg.sender, address(this), synthAmount);
-        synth.burn(synthAmount);
-
-        (uint112 reserveNative, uint112 reserveForeign, ) = getReserves(
-            foreignAsset
-        ); // gas savings
-
-        amountNative = VaderMath.calculateSwap(
-            synthAmount,
-            reserveForeign,
-            reserveNative
-        );
-
-        _update(
-            foreignAsset,
-            reserveNative - amountNative,
-            reserveForeign,
-            reserveNative,
-            reserveForeign
-        );
-
-        nativeAsset.safeTransfer(to, amountNative);
     }
 
     /*
@@ -502,6 +387,7 @@ contract VaderPoolV2 is IVaderPoolV2, BasePoolV2, Ownable {
         override
         onlyOwner
     {
+        // GD: this needs revisiting
         wrapper.createWrapper(foreignAsset);
     }
 
