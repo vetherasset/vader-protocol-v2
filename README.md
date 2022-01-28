@@ -46,7 +46,7 @@ npx truffle run verify MyContract --network kovan
 -   USDV: 0xea3Fb6f331735252E7Bfb0b24b3B761301293DBe
 -   UnlockValidator: 0xfcC4bCB2924ee4a0334A5B0b2C6ad893E8Ad3337
 -   TWAP: 0x6a81be7f5c868f34f109d5b5f38ed67f3395f7b0
--   Minter:
+-   Minter: 0x00aadC47d91fD9CaC3369E6045042f9F99216B98
 
 ### Kovan
 
