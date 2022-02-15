@@ -47,6 +47,11 @@ npx truffle run verify MyContract --network kovan
 -   UnlockValidator: 0xfcC4bCB2924ee4a0334A5B0b2C6ad893E8Ad3337
 -   TWAP: 0x6a81be7f5c868f34f109d5b5f38ed67f3395f7b0
 -   Minter: 0x00aadC47d91fD9CaC3369E6045042f9F99216B98
+-   TimeLock: 0x0df9220aEaA28cE8bA06ADd7c5B3Cc6e7C1Cd511
+
+# Rinkeby
+
+-   TimeLock: 0x4402A7C8829489705852e54Da50Ebec60C8C86a8
 
 ### Kovan
 
